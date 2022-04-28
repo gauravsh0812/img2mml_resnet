@@ -37,12 +37,12 @@ def define_model(SRC, TRG, DEVICE):#, TRG_PAD_IDX, OUTPUT_DIM):
     TRG_PAD_IDX = TRG.vocab.stoi[TRG.pad_token]
     DEC_EMB_DIM = 256
     HID_DIM = 500
-    N_LAYERS = 2
+    N_LAYERS = 1
     DROPOUT = 0.5
 
     print('building model...')
     ENC = Encoder()
-    DEC = Decoder(DEC_EMB_DIM, HID_DIM, OUTPUT_DIM, ENC_DIM, DROPOUT)
+    DEC = Decoder(DEC_EMB_DIM, HID_DIM, OUTPUT_DIM, N_LAYERS, ENC_DIM, DROPOUT)
     model = Img2Seq(ENC, DEC, DEVICE, ENC_DIM, HID_DIM)
 
     return model

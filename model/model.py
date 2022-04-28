@@ -50,7 +50,7 @@ class Decoder(nn.Module):
     Decoder.
     """
 
-    def __init__(self, embed_dim, hid_dim, output_dim, encoder_dim=2048, dropout=0.5):
+    def __init__(self, embed_dim, hid_dim, output_dim, n_layers, encoder_dim=2048, dropout=0.5):
         """
         :param attention_dim: size of attention network
         :param embed_dim: embedding size
@@ -65,6 +65,7 @@ class Decoder(nn.Module):
         # self.attention_dim = attention_dim
         self.embed_dim = embed_dim
         self.hid_dim = hid_dim
+        self.n_layers = n_layers
         self.output_dim = output_dim
         self.dropout = dropout
 
