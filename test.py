@@ -16,9 +16,10 @@ def evaluate(trg_field, model, batch_size, iterator, criterion, device, write_fi
 
         for i, batch in enumerate(iterator):
 
+            # if i%50==0:print(f'test-{i}')
             trg = batch.mml.to(device)
             batch_size = trg.shape[1]
-            h = model.encoder.init_hidden(batch_size)
+            # h = model.encoder.init_hidden(batch_size)
 
             img_names = batch.id
             src = preprocess_images(img_names, 'data/images/')

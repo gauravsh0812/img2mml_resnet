@@ -32,9 +32,8 @@ def define_model(SRC, TRG, DEVICE):#, TRG_PAD_IDX, OUTPUT_DIM):
 
     print('defining model...')
     INPUT_CHANNEL = 3
-    ENC_DIM = 2048
     OUTPUT_DIM = len(TRG.vocab)
-    TRG_PAD_IDX = TRG.vocab.stoi[TRG.pad_token]
+    ENC_DIM = 512
     DEC_EMB_DIM = 256
     HID_DIM = 500
     N_LAYERS = 1
@@ -42,7 +41,7 @@ def define_model(SRC, TRG, DEVICE):#, TRG_PAD_IDX, OUTPUT_DIM):
 
     print('building model...')
     ENC = Encoder()
-    DEC = Decoder(DEC_EMB_DIM, HID_DIM, OUTPUT_DIM, N_LAYERS, ENC_DIM, DROPOUT)
+    DEC = Decoder(DEC_EMB_DIM, HID_DIM, OUTPUT_DIM, N_LAYERS, DROPOUT)
     model = Img2Seq(ENC, DEC, DEVICE, ENC_DIM, HID_DIM)
 
     return model
@@ -93,7 +92,7 @@ print(f'The model has {count_parameters(model):,} trainable parameters')
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
 
-EPOCHS = 1
+EPOCHS = 200
 CLIP = 1
 
 # to save trained model and logs

@@ -1,4 +1,5 @@
 import torch
+import random
 from torch import nn
 import torchvision
 
@@ -11,7 +12,7 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.enc_image_size = encoded_image_size
 
-        resnet = torchvision.models.resnet101(pretrained=True)  # pretrained ImageNet ResNet-101
+        resnet = torchvision.models.resnet18(pretrained=True)  # pretrained ImageNet ResNet-101
 
         # Remove linear and pool layers (since we're not doing classification)
         modules = list(resnet.children())[:-2]
@@ -50,7 +51,7 @@ class Decoder(nn.Module):
     Decoder.
     """
 
-    def __init__(self, embed_dim, hid_dim, output_dim, n_layers, encoder_dim=2048, dropout=0.5):
+    def __init__(self, embed_dim, hid_dim, output_dim, n_layers, dropout=0.5):
         """
         :param attention_dim: size of attention network
         :param embed_dim: embedding size
@@ -61,7 +62,7 @@ class Decoder(nn.Module):
         """
         super(Decoder, self).__init__()
 
-        self.encoder_dim = encoder_dim
+        # self.encoder_dim = encoder_dim
         # self.attention_dim = attention_dim
         self.embed_dim = embed_dim
         self.hid_dim = hid_dim
@@ -73,9 +74,9 @@ class Decoder(nn.Module):
 
         self.embedding = nn.Embedding(output_dim, embed_dim)  # embedding layer
         self.dropout = nn.Dropout(p=self.dropout)
-        self.decode_step = nn.LSTMCell(embed_dim, hid_dim, bias=True)  # decoding LSTMCell
-        self.init_h = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial hidden state of LSTMCell
-        self.init_c = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial cell state of LSTMCell
+        self.decode_step = nn.LSTM(embed_dim, hid_dim, num_layers=n_layers, dropout=dropout, bias=True)  # decoding LSTMCell
+        # self.init_h = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial hidden state of LSTMCell
+        # self.init_c = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial cell state of LSTMCell
         self.fc = nn.Linear(hid_dim, output_dim)  # linear layer to find scores over vocabulary
         self.init_weights()  # initialize some layers with the uniform distribution
 
@@ -99,10 +100,10 @@ class Decoder(nn.Module):
     def forward(self, dec_src, hidden, cell):
         # Embedding
         embeddings = self.embedding(dec_src.unsqueeze(0))  # (1, batch_size, embed_dim)
-        print('dec emb shape: ', embeddings.shape)
-        print('h shape:  ', hidden.shape)
+        # print('dec emb shape: ', embeddings.shape)
+        # print('h shape:  ', hidden.shape)
         lstm_output, (hidden, cell) = self.decode_step(embeddings, (hidden, cell))
-        prediction = self.fc(lstm_output)  # [1, Batch, output_dim]
+        predictions = self.fc(lstm_output)  # [1, Batch, output_dim]
 
         return predictions.squeeze(0), hidden, cell
 
@@ -127,9 +128,10 @@ class Img2Seq(nn.Module):
         :return: hidden state, cell state
         """
         mean_encoder_out = encoder_out.mean(dim=1)
+        # print('encoder_out:  ', encoder_out.shape)
         h = self.init_h(mean_encoder_out)  # (batch_size, hid_dim)
         c = self.init_c(mean_encoder_out)
-        return h, c
+        return h.unsqueeze(0), c.unsqueeze(0)
 
     def forward(self, trg_field, src, trg,  write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
 
@@ -159,7 +161,7 @@ class Img2Seq(nn.Module):
 
         for t in range(1, trg_len):
 
-            output, hidden, cell = self.decoder(dec_src, hidden.unsqueeze(0), cell.unsqueeze(0))
+            output, hidden, cell = self.decoder(dec_src, hidden, cell)
             outputs[t]=output
             top1 = output.argmax(1)     # [batch_size]
 
