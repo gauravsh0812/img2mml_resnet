@@ -46,12 +46,42 @@ class Encoder(nn.Module):
             for p in c.parameters():
                 p.requires_grad = fine_tune
 
+class Attention(nn.Module):
+    """
+    Attention
+    """
+
+    def __init__(self, encoder_dim, hid_dim, attention_dim):
+        super(Attention, self).__init__()
+
+        self.enclayer = nn.Linear(enoder_dim, attention_dim)
+        self.hidlayer = nn.Linear(hid_dim, attention_dim)
+        self.enc_hidlayer = nn.Linear(encoder_dim, hid_dim)
+        self.attnlayer = nn.Linear(attention_dim, 1)
+        self.relu = nn.Relu()
+        self.softmax = nn.Softmax(dim=1)
+        self.sigmoid = nn.Sigmoid()
+
+
+    def forward(self, encoder_out, hidden):
+        attn1 = self.enclayer(encoder_out)   # [B, num_pixels, attention_dim]
+        attn2 = self.hidlayer(hidden)       # [1, B, attn_dim]
+        net_attn = self.relu(attn1.permute(1,0,2) + attn2)   # [num, B, attn_dim]
+        net_attn = self.attnlayer(net_attn).squeeze(2)     # [num, B]
+        alpha = self.softmax(net_attn.permute(1,0))  # [B, num]
+        weighted_attn = (encoder_out * alpha.unsqueeze(2)).sum(dim=1)   # [B, encoder_dim]
+        gate = self.sigmoid(self.enc_hidlayer(hidden).unsqueeze(0))    # [B, enc_dim]
+        final_attn_encoding = gate * weighted_attn   # [B, enc_dim]
+
+        return final_attn_encoding.unsqueeze(0)
+
+
 class Decoder(nn.Module):
     """
     Decoder.
     """
 
-    def __init__(self, embed_dim, hid_dim, output_dim, n_layers, dropout=0.5):
+    def __init__(self, embed_dim, hid_dim, attention_dim, output_dim, n_layers, dropout=0.5):
         """
         :param attention_dim: size of attention network
         :param embed_dim: embedding size
@@ -62,15 +92,15 @@ class Decoder(nn.Module):
         """
         super(Decoder, self).__init__()
 
-        # self.encoder_dim = encoder_dim
-        # self.attention_dim = attention_dim
+        self.encoder_dim = encoder_dim
+        self.attention_dim = attention_dim
         self.embed_dim = embed_dim
         self.hid_dim = hid_dim
         self.n_layers = n_layers
         self.output_dim = output_dim
         self.dropout = dropout
 
-        # self.attention = Attention(encoder_dim, hid_dim, attention_dim)  # attention network
+        self.attention = Attention(encoder_dim, hid_dim, attention_dim)  # attention network
 
         self.embedding = nn.Embedding(output_dim, embed_dim)  # embedding layer
         self.dropout = nn.Dropout(p=self.dropout)
@@ -97,12 +127,20 @@ class Decoder(nn.Module):
             p.requires_grad = fine_tune
 
 
-    def forward(self, dec_src, hidden, cell):
+    def forward(self, dec_src, encoder_out, hidden, cell):
         # Embedding
         embeddings = self.embedding(dec_src.unsqueeze(0))  # (1, batch_size, embed_dim)
         # print('dec emb shape: ', embeddings.shape)
         # print('h shape:  ', hidden.shape)
-        lstm_output, (hidden, cell) = self.decode_step(embeddings, (hidden, cell))
+        # hidden shape = [1, B, hid]
+
+        # Calculate attention
+        final_attn_encoding = self.attention(encoder_out, hidden)    # [ 1, B, enc-dim]
+
+        # lstm input
+        lstm_input = torch.cat((embeddings, final_attn_encoding), dim=2)
+
+        lstm_output, (hidden, cell) = self.decode_step(lstm_input, (hidden, cell))
         predictions = self.fc(lstm_output)  # [1, Batch, output_dim]
 
         return predictions.squeeze(0), hidden, cell
@@ -161,7 +199,7 @@ class Img2Seq(nn.Module):
 
         for t in range(1, trg_len):
 
-            output, hidden, cell = self.decoder(dec_src, hidden, cell)
+            output, hidden, cell = self.decoder(dec_src, encoder_out, hidden, cell)
             outputs[t]=output
             top1 = output.argmax(1)     # [batch_size]
 
