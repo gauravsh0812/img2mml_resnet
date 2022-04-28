@@ -45,7 +45,7 @@ class Encoder(nn.Module):
             for p in c.parameters():
                 p.requires_grad = fine_tune
 
-class DecoderWithAttention(nn.Module):
+class Decoder(nn.Module):
     """
     Decoder.
     """
@@ -59,7 +59,7 @@ class DecoderWithAttention(nn.Module):
         :param encoder_dim: feature size of encoded images
         :param dropout: dropout
         """
-        super(DecoderWithAttention, self).__init__()
+        super(Decoder, self).__init__()
 
         self.encoder_dim = encoder_dim
         # self.attention_dim = attention_dim
@@ -70,7 +70,7 @@ class DecoderWithAttention(nn.Module):
 
         # self.attention = Attention(encoder_dim, hid_dim, attention_dim)  # attention network
 
-        self.embedding = nn.Embedding(vocab_size, embed_dim)  # embedding layer
+        self.embedding = nn.Embedding(output_dim, embed_dim)  # embedding layer
         self.dropout = nn.Dropout(p=self.dropout)
         self.decode_step = nn.LSTMCell(embed_dim, hid_dim, bias=True)  # decoding LSTMCell
         self.init_h = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial hidden state of LSTMCell
@@ -98,22 +98,26 @@ class DecoderWithAttention(nn.Module):
     def forward(self, dec_src, hidden, cell):
         # Embedding
         embeddings = self.embedding(dec_src.unsqueeze(0))  # (1, batch_size, embed_dim)
+        print('dec emb shape: ', embeddings.shape)
+        print('h shape:  ', hidden.shape)
         lstm_output, (hidden, cell) = self.decode_step(embeddings, (hidden, cell))
         prediction = self.fc(lstm_output)  # [1, Batch, output_dim]
 
         return predictions.squeeze(0), hidden, cell
 
 
-class Image2mml(nn.Module):
+class Img2Seq(nn.Module):
     """
     Calling class
     """
-    def __init__(self, encoder, decoder, device):
-        super(Image2mml, self).__init__()
+    def __init__(self, encoder, decoder, device, encoder_dim, hid_dim):
+        super(Img2Seq, self).__init__()
 
         self.encoder = encoder
         self.decoder = decoder
         self.device = device
+        self.init_h = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial hidden state of LSTMCell
+        self.init_c = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial cell state of LSTMCell
 
     def init_hidden_state(self, encoder_out):
         """
@@ -137,15 +141,15 @@ class Image2mml(nn.Module):
         # for each token, [batch, output_dim]
 
         # run the encoder --> get flattened FV of images
-        enc_output = self.encoder(src)       # [B, e_i, e_i, encoder_dim or C_out]
+        encoder_out = self.encoder(src)       # [B, e_i, e_i, encoder_dim or C_out]
         # Flatten image
-        encoder_out = encoder_out.view(batch_size, -1, encoder_dim)  # (batch_size, num_pixels, encoder_dim)
+        encoder_out = encoder_out.view(batch_size, -1, encoder_out.shape[-1])  # (batch_size, num_pixels, encoder_dim)
         num_pixels = encoder_out.size(1)
 
         # Initialize LSTM state
         hidden, cell = self.init_hidden_state(encoder_out)  # (batch_size, hid_dim)
 
-        dec_src = trg[:,0]   # [1, B]
+        dec_src = trg[0,:]   # [1, B]
 
         if write_flag:
             pred_seq_per_batch = torch.zeros(trg.shape)
@@ -154,7 +158,7 @@ class Image2mml(nn.Module):
 
         for t in range(1, trg_len):
 
-            output, hidden, cell = self.decoder(dec_src, hidden, cell)
+            output, hidden, cell = self.decoder(dec_src, hidden.unsqueeze(0), cell.unsqueeze(0))
             outputs[t]=output
             top1 = output.argmax(1)     # [batch_size]
 

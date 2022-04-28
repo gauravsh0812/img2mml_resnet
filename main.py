@@ -8,7 +8,7 @@ from train import train
 from test import evaluate
 from preprocessing.preprocess_img2mml import preprocess
 from preprocessing.preprocess_images import preprocess_images
-from model.opennmt_V1 import Encoder, Decoder, Img2Seq
+from model.model import Encoder, Decoder, Img2Seq
 import time
 import math
 import argparse
@@ -42,8 +42,8 @@ def define_model(SRC, TRG, DEVICE):#, TRG_PAD_IDX, OUTPUT_DIM):
 
     print('building model...')
     ENC = Encoder()
-    DEC = DecoderWithAttention(DEC_EMB_DIM, HID_DIM, OUTPUT_DIM, ENC_DIM, DROPOUT)
-    model = Img2Seq(ENC, DEC, DEVICE)
+    DEC = Decoder(DEC_EMB_DIM, HID_DIM, OUTPUT_DIM, ENC_DIM, DROPOUT)
+    model = Img2Seq(ENC, DEC, DEVICE, ENC_DIM, HID_DIM)
 
     return model
 
@@ -86,6 +86,8 @@ model.to(device)
 print('MODEL: ')
 print(model.apply(init_weights))
 print(f'The model has {count_parameters(model):,} trainable parameters')
+# with open('logs/model.txt', 'w') as f:
+#    f.write(model.apply(init_weights))
 
 # optimizer and loss
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
