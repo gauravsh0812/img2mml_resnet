@@ -54,11 +54,11 @@ class Attention(nn.Module):
     def __init__(self, encoder_dim, hid_dim, attention_dim):
         super(Attention, self).__init__()
 
-        self.enclayer = nn.Linear(enoder_dim, attention_dim)
+        self.enclayer = nn.Linear(encoder_dim, attention_dim)
         self.hidlayer = nn.Linear(hid_dim, attention_dim)
-        self.enc_hidlayer = nn.Linear(encoder_dim, hid_dim)
+        self.enc_hidlayer = nn.Linear(hid_dim, encoder_dim)
         self.attnlayer = nn.Linear(attention_dim, 1)
-        self.relu = nn.Relu()
+        self.relu = nn.ReLU()
         self.softmax = nn.Softmax(dim=1)
         self.sigmoid = nn.Sigmoid()
 
@@ -69,9 +69,13 @@ class Attention(nn.Module):
         net_attn = self.relu(attn1.permute(1,0,2) + attn2)   # [num, B, attn_dim]
         net_attn = self.attnlayer(net_attn).squeeze(2)     # [num, B]
         alpha = self.softmax(net_attn.permute(1,0))  # [B, num]
+        # print('alpha:  ', alpha.shape)
         weighted_attn = (encoder_out * alpha.unsqueeze(2)).sum(dim=1)   # [B, encoder_dim]
-        gate = self.sigmoid(self.enc_hidlayer(hidden).unsqueeze(0))    # [B, enc_dim]
+        # print('wght_attn:  ', weighted_attn.shape)
+        gate = self.sigmoid(self.enc_hidlayer(hidden.squeeze(0)))    # [B, enc_dim]
+        # print('gate:  ', gate.shape)
         final_attn_encoding = gate * weighted_attn   # [B, enc_dim]
+        # print('final_attn_encoding:  ', final_attn_encoding.shape)
 
         return final_attn_encoding.unsqueeze(0)
 
@@ -81,7 +85,7 @@ class Decoder(nn.Module):
     Decoder.
     """
 
-    def __init__(self, embed_dim, hid_dim, attention_dim, output_dim, n_layers, dropout=0.5):
+    def __init__(self, embed_dim, encoder_dim, hid_dim, attention_dim, output_dim, n_layers, dropout=0.5):
         """
         :param attention_dim: size of attention network
         :param embed_dim: embedding size
@@ -104,6 +108,7 @@ class Decoder(nn.Module):
 
         self.embedding = nn.Embedding(output_dim, embed_dim)  # embedding layer
         self.dropout = nn.Dropout(p=self.dropout)
+        self.lstm_input_layer = nn.Linear(embed_dim + encoder_dim, embed_dim)
         self.decode_step = nn.LSTM(embed_dim, hid_dim, num_layers=n_layers, dropout=dropout, bias=True)  # decoding LSTMCell
         # self.init_h = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial hidden state of LSTMCell
         # self.init_c = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial cell state of LSTMCell
@@ -138,8 +143,10 @@ class Decoder(nn.Module):
         final_attn_encoding = self.attention(encoder_out, hidden)    # [ 1, B, enc-dim]
 
         # lstm input
+        # print(embeddings.shape)
+        # print(final_attn_encoding.shape)
         lstm_input = torch.cat((embeddings, final_attn_encoding), dim=2)
-
+        lstm_input = self.lstm_input_layer(lstm_input)
         lstm_output, (hidden, cell) = self.decode_step(lstm_input, (hidden, cell))
         predictions = self.fc(lstm_output)  # [1, Batch, output_dim]
 
