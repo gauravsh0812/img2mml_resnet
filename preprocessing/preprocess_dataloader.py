@@ -11,6 +11,8 @@ from torch.utils.data import Dataset, DataLoader, DistributedSampler
 from collections import Counter
 from torchtext.vocab import Vocab
 from torch.nn.utils.rnn import pad_sequence
+from functools import partial
+
 
 # set up seed
 SEED = 1234
@@ -18,8 +20,6 @@ random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
-
-device = torch.device(f'cuda:{args.gpu_num}' if torch.cuda.is_available() else 'cpu')
 
 class Img2MML_dataset(Dataset):
     def __init__(self, dataframe, vocab, tokenizer):
@@ -42,7 +42,21 @@ class Img2MML_dataset(Dataset):
     def __getitem__(self, index):
         return self.dataframe.iloc[index, 0], self.dataframe.iloc[index, 1]
 
-def pad_collate(batch):
+class My_pad_collate(object):
+    def __init__(self, device):
+        self.device = device
+    def __call__(self, batch):
+
+        _img, _mml = zip(*batch)
+
+        # padding
+        padded_mml_tensor = pad_sequence(_mml, padding_value=0)
+        _img = [int(i) for i in _img]
+
+        return torch.Tensor(_img).to(self.device), padded_mml_tensor.to(self.device)
+
+
+def pad_collate(batch, device):
 
     _img, _mml = zip(*batch)
 
@@ -52,13 +66,15 @@ def pad_collate(batch):
 
     return torch.Tensor(_img).to(device), padded_mml_tensor.to(device)
 
-def preprocess(batch_size):
+def preprocess(batch_size, device):
 
     print('preprocessing data...')
 
     # reading raw text files
     mml_txt = open('data/mml.txt').read().split('\n')[:-1]
     image_num = range(0,len(mml_txt))
+
+    device = torch.device(f'cuda:{args.gpu_num}' if torch.cuda.is_available() else 'cpu')
 
     # adding <sos> and <eos> tokens then creating a dataframe
     raw_data = {'ID': [f'{num}' for num in image_num],
@@ -94,7 +110,10 @@ def preprocess(batch_size):
 
     # parameters needed for DDP:
     world_size = torch.cuda.device_count()  # total number of GPUs
-    rank = rank                                # sequential id of GPU
+    rank = rank                               # sequential id of GPU
+
+    # initializing pad collate class
+    mypadcollate = My_pad_collate(device)
 
     # initailizing class Img2MML_dataset: train dataloader
     imml_train = Img2MML_dataset(train_copy,
@@ -113,18 +132,25 @@ def preprocess(batch_size):
                                   batch_size=batch_size,
                                   num_workers=4,
                                   shuffle=False,
-                                  collate_fn=pad_collate)
+                                  collate_fn=mypadcollate)
 
     # initailizing class Img2MML_dataset: test dataloader
     imml_test = Img2MML_dataset(test_copy, vocab, tokenizer)
     test_sampler = DistributedSampler(imml_test, num_replicas=world_size, rank=rank, shuffle=True, seed=42)
-    test_dataloader = DataLoader(imml_test, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=pad_collate)
+    test_dataloader = DataLoader(imml_test, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=mypadcollate)
 
     # initailizing class Img2MML_dataset: val dataloader
     imml_val = Img2MML_dataset(val_copy, vocab, tokenizer)
     val_sampler = DistributedSampler(imml_train, num_replicas=world_size, rank=rank, shuffle=True, seed=42)
-    val_dataloader = DataLoader(imml_val, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=pad_collate)
+    val_dataloader = DataLoader(imml_val, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=mypadcollate)
 
+    dataiter = iter(train_dataloader)
+    while True:
+        data = dataiter.next()
+        i, m = data
+        print(i)
+        print(m)
+        print(' ')
 
 if __name__ == "__main__":
-    preprocess(128)
+    preprocess(128, 1)

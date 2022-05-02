@@ -93,7 +93,7 @@ print(f'The model has {count_parameters(model):,} trainable parameters')
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
 
-EPOCHS = 100 
+EPOCHS = 100
 CLIP = 1
 
 # to save trained model and logs
