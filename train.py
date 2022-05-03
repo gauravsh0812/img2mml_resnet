@@ -15,7 +15,7 @@ def train(trg_field, model, batch_size, iterator, optimizer, criterion,device, c
 
     for i, batch in enumerate(iterator):
 
-        if i%10==0: print(i) 
+        if i%100==0: print(i) 
         # initailize the hidden state
         trg = batch.mml.to(device)
         batch_size = trg.shape[1]

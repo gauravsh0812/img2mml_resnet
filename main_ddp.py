@@ -103,7 +103,7 @@ print(f'DDP_Model running on rank: {rank}...')
 device = torch.device(f'cuda:{rank}' if torch.cuda.is_available() else 'cpu')
 
 train_dataloader, test_dataloader, val_dataloader = preprocess(device, batch_size, rank, world_size)
-TRG_PAD_IDX = TRG.vocab.stoi[TRG.pad_token]
+TRG_PAD_IDX = 0     # can be obtained from vocab in preprocessing <pad>:0, <unk>:1, <sos>:2, <eos>:3
 model = define_model(SRC, TRG, device)
 model.to(device)
 
