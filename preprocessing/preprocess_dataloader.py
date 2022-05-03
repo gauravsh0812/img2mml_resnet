@@ -144,13 +144,4 @@ def preprocess(batch_size, device):
     val_sampler = DistributedSampler(imml_train, num_replicas=world_size, rank=rank, shuffle=True, seed=42)
     val_dataloader = DataLoader(imml_val, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=mypadcollate)
 
-    dataiter = iter(train_dataloader)
-    while True:
-        data = dataiter.next()
-        i, m = data
-        print(i)
-        print(m)
-        print(' ')
-
-if __name__ == "__main__":
-    preprocess(128, 1)
+    return train_dataloader, test_dataloader, val_dataloader
