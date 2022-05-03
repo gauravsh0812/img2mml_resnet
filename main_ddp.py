@@ -87,12 +87,18 @@ def epoch_time(start_time, end_time):
     elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
     return elapsed_mins, elapsed_secs
 
+# parameters
+EPOCHS = 100
+CLIP = 1
+batch_size = 128
+best_valid_loss = float('inf')
+
 # parameters needed for DDP:
 world_size = torch.cuda.device_count()  # total number of GPUs
 rank = rank                               # sequential id of GPU
 
 print(f'DDP_Model running on rank: {rank}...')
-setup(rank, world_size)
+# setup(rank, world_size)
 
 device = torch.device(f'cuda:{rank}' if torch.cuda.is_available() else 'cpu')
 
@@ -113,11 +119,6 @@ print(f'The model has {count_parameters(model):,} trainable parameters')
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
 
-EPOCHS = 100
-CLIP = 1
-batch_size = 128
-best_valid_loss = float('inf')
-
 # to save trained model and logs
 FOLDER = ['trained_models', 'logs']
 for f in FOLDER:
@@ -131,8 +132,8 @@ for epoch in range(EPOCHS):
     start_time = time.time()
 
     train_dataloader.sampler.set_epoch(epoch)
-    train_loss = mp.spwan(train, ddp_model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False)
-    # train_loss = train(ddp_model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
+    # train_loss = mp.spwan(train, ddp_model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False)
+    train_loss = train(ddp_model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
     val_loss = evaluate(ddp_model, batch_size, val_dataloader, criterion, device, True)
     end_time=time.time()
     epoch_mins, epoch_secs = epoch_time(start_time, end_time)
@@ -151,7 +152,7 @@ for epoch in range(EPOCHS):
     loss_file.write(f'\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}\n')
     loss_file.write(f'\t Val. Loss: {val_loss:.3f} |  Val. PPL: {math.exp(val_loss):7.3f}\n')
 
-    cleanup()
+    # cleanup()
 
 
 print('final model saved at:  ', f'trained_models/opennmt-version1-model.pt')
