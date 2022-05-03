@@ -57,6 +57,6 @@ def evaluate(trg_field, model, batch_size, iterator, criterion, device, write_fi
 
             loss = criterion(output, trg)
 
-            epoch_loss += loss.item() 
+            epoch_loss += loss.item()
 
         return epoch_loss / len(iterator)

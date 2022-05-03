@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*-
 
 import os
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from train import train
-from test import evaluate
-from preprocessing.preprocess_dataloader import preprocess
-from model.model import Encoder, Decoder, Img2Seq
 import time
 import math
 import argparse
 import logging
 import itertools
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.distributed as dist
+import torch.multiprocessing as mp
+from torch.nn.parallel import DistributedDataParallel as DDP
+from train import train
+from test import evaluate
+from preprocessing.preprocess_dataloader import preprocess
+from model.model import Encoder, Decoder, Img2Seq
 
 # import torcheck  # can be used to check if the model is working fine or not. Also,
 # can be used to check if any of the parameter or weight is dying or exploding.
@@ -59,6 +62,16 @@ def init_weights(m):
         else:
             nn.init.constant_(param.data, 0)
 
+def setup(rank, world_size):
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+
+    # initialize the process group
+    dist.init_process_group("nccl", init_method='env://', rank=rank, world_size=world_size)
+
+def cleanup():
+    dist.destroy_process_group()
+
 def count_parameters(model):
     '''
     counting total number of parameters
@@ -74,29 +87,36 @@ def epoch_time(start_time, end_time):
     elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
     return elapsed_mins, elapsed_secs
 
-batch_size = 128
-best_valid_loss = float('inf')
+# parameters needed for DDP:
+world_size = torch.cuda.device_count()  # total number of GPUs
+rank = rank                               # sequential id of GPU
+
+print(f'DDP_Model running on rank: {rank}...')
+setup(rank, world_size)
+
 device = torch.device(f'cuda:{rank}' if torch.cuda.is_available() else 'cpu')
 
-train_dataloader, test_dataloader, val_dataloader = preprocess(device, batch_size)
+train_dataloader, test_dataloader, val_dataloader = preprocess(device, batch_size, rank, world_size)
 TRG_PAD_IDX = TRG.vocab.stoi[TRG.pad_token]
-model = define_model(SRC, TRG, device)#, TRG_PAD_IDX, output_dim)
+model = define_model(SRC, TRG, device)
 model.to(device)
 
 # Wrap the model in DDP wrapper
-model = DistributedDataParallel(model, device_ids=[rank], output_device=rank)
+ddp_model = DDP(model, device_ids=[rank], output_device=rank)
 
 print('MODEL: ')
-print(model.apply(init_weights))
+print(ddp_model.apply(init_weights))
 print(f'The model has {count_parameters(model):,} trainable parameters')
 
 
 # optimizer and loss
-optimizer = optim.Adam(model.parameters(), lr=0.0001)
+optimizer = optim.Adam(model.parameters(), lr=0.001)
 criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
 
 EPOCHS = 100
 CLIP = 1
+batch_size = 128
+best_valid_loss = float('inf')
 
 # to save trained model and logs
 FOLDER = ['trained_models', 'logs']
@@ -110,9 +130,10 @@ for epoch in range(EPOCHS):
 
     start_time = time.time()
 
-    train_iter.sampler.set_epoch(epoch)
-    train_loss = train(model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
-    val_loss = evaluate(TRG, model, batch_size, val_dataloader, criterion, device, True)
+    train_dataloader.sampler.set_epoch(epoch)
+    train_loss = mp.spwan(train, ddp_model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False)
+    # train_loss = train(ddp_model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
+    val_loss = evaluate(ddp_model, batch_size, val_dataloader, criterion, device, True)
     end_time=time.time()
     epoch_mins, epoch_secs = epoch_time(start_time, end_time)
 
@@ -130,13 +151,14 @@ for epoch in range(EPOCHS):
     loss_file.write(f'\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}\n')
     loss_file.write(f'\t Val. Loss: {val_loss:.3f} |  Val. PPL: {math.exp(val_loss):7.3f}\n')
 
+    cleanup()
 
 
 print('final model saved at:  ', f'trained_models/opennmt-version1-model.pt')
 
 # testing
 model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))
-test_loss = evaluate(TRG, model, batch_size, test_dataloader, criterion, device, True)
+test_loss = evaluate(ddp_model, batch_size, test_dataloader, criterion, device, True)
 
 print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
 loss_file.write(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')

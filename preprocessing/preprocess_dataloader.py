@@ -66,7 +66,7 @@ def pad_collate(batch, device):
 
     return torch.Tensor(_img).to(device), padded_mml_tensor.to(device)
 
-def preprocess(batch_size, device):
+def preprocess(batch_size, device, rank, world_size):
 
     print('preprocessing data...')
 
@@ -107,10 +107,6 @@ def preprocess(batch_size, device):
     train_copy = train.copy()
     test_copy = test.copy()
     val_copy = val.copy()
-
-    # parameters needed for DDP:
-    world_size = torch.cuda.device_count()  # total number of GPUs
-    rank = rank                               # sequential id of GPU
 
     # initializing pad collate class
     mypadcollate = My_pad_collate(device)
