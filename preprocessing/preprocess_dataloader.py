@@ -140,4 +140,4 @@ def preprocess(device, batch_size, rank, world_size):
     val_sampler = DistributedSampler(imml_train, num_replicas=world_size, rank=rank, shuffle=True, seed=42)
     val_dataloader = DataLoader(imml_val, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=mypadcollate)
 
-    return train_dataloader, test_dataloader, val_dataloader
+    return train_dataloader, test_dataloader, val_dataloader, vocab
