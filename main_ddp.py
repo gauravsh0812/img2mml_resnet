@@ -12,8 +12,8 @@ import torch.optim as optim
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
-from train import train
-from test import evaluate
+from train_ddp import train
+from test_ddp import evaluate
 from preprocessing.preprocess_dataloader import preprocess
 from model.model import Encoder, Decoder, Img2Seq
 
@@ -63,11 +63,14 @@ def init_weights(m):
             nn.init.constant_(param.data, 0)
 
 def setup(rank, world_size):
+    os.environ["PL_TORCH_DISTRIBUTED_BACKEND"] = "gloo"
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12355'
+    os.environ['MASTER_PORT'] = '12345'
+
+    # export GLOO_SOCKET_IFNAME=en0
 
     # initialize the process group
-    dist.init_process_group("nccl", init_method='env://', rank=rank, world_size=world_size)
+    dist.init_process_group("gloo", init_method='env://', rank=rank, world_size=world_size)
 
 def cleanup():
     dist.destroy_process_group()
