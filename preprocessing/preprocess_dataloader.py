@@ -126,7 +126,7 @@ def preprocess(device, batch_size, rank, world_size):
     # creating dataloader
     train_dataloader = DataLoader(imml_train,
                                   batch_size=batch_size,
-                                  num_workers=4,
+                                  num_workers=0,
                                   shuffle=False,
                                   collate_fn=mypadcollate)
 
