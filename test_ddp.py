@@ -3,7 +3,7 @@
 import torch
 from preprocessing.preprocess_images import preprocess_images
 
-def evaluate(model, vocab, batch_size, iterator, criterion, device, write_file):
+def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write_file):
 
     model.eval()
 
@@ -14,17 +14,17 @@ def evaluate(model, vocab, batch_size, iterator, criterion, device, write_file):
 
     with torch.no_grad():
 
-        for i, batch in enumerate(iterator):
+        for img, mml in enumerate(test_dataloader):
 
             if i%50==0: print(f'test_{i}')
             # initailize the hidden state
             trg = mml.to(device)
-            print('@test trg shape:  ', trg.shape)
+            # print('@test trg shape:  ', trg.shape)
             batch_size = trg.shape[1]
 
             # grab the image and preprocess it
-            print('@test img shape:  ', img.shape)
-            src = preprocess_images(img, 'data/images/')
+            # print('@test img shape:  ', img.shape)
+            src = preprocess_images(img.int(), 'data/images/')
             # src will be list of image tensors
             # need to pack them to create a single batch tensor
             src = torch.stack(src).to(device)
@@ -32,7 +32,7 @@ def evaluate(model, vocab, batch_size, iterator, criterion, device, write_file):
 
             # trg = batch.mml.to(device)
 
-            output, pred = model(trg_field, src, trg, True)   # turn off teacher_forcing
+            output, pred = model(src, trg, True)   # turn off teacher_forcing
 
             # translating and storing trg and pred sequences in batches
             if write_file:
