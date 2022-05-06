@@ -178,7 +178,7 @@ class Img2Seq(nn.Module):
         c = self.init_c(mean_encoder_out)
         return h.unsqueeze(0), c.unsqueeze(0)
 
-    def forward(self, trg_field, src, trg,  write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
+    def forward(self, src, trg,  write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
 
         batch_size = trg.shape[1]
         trg_len = trg.shape[0]

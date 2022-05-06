@@ -16,7 +16,7 @@ def evaluate(model, vocab, batch_size, iterator, criterion, device, write_file):
 
         for i, batch in enumerate(iterator):
 
-            # if i%10==0: print(i)
+            if i%50==0: print(f'test_{i}')
             # initailize the hidden state
             trg = mml.to(device)
             print('@test trg shape:  ', trg.shape)

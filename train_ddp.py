@@ -13,17 +13,17 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
     trg_seqs = open('logs/train_targets.txt', 'w')
     pred_seqs = open('logs/train_predicted.txt', 'w')
 
-    for img, mml in enumerate(iter(train_dataloader)):
+    for img, mml in train_dataloader:
 
-        # if i%10==0: print(i)
-        # initailize the hidden state
+        if i%100==0: print(i)
+        
         trg = mml.to(device)
-        print('@train trg shape:  ', trg.shape)
+        #print('@train trg shape:  ', trg.shape)
         batch_size = trg.shape[1]
 
         # grab the image and preprocess it
-        print('@train img shape:  ', img.shape)
-        src = preprocess_images(img, 'data/images/')
+        #print('@train img shape:  ', img.shape)
+        src = preprocess_images(img.int(), 'data/images/')
         # src will be list of image tensors
         # need to pack them to create a single batch tensor
         src = torch.stack(src).to(device)

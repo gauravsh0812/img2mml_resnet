@@ -9,8 +9,8 @@ import os
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader, DistributedSampler
 from collections import Counter
-# from torchtext.legacy.vocab import Vocab
-from torchtext.vocab import Vocab
+from torchtext.legacy.vocab import Vocab
+# from torchtext.vocab import Vocab
 from torch.nn.utils.rnn import pad_sequence
 from functools import partial
 
@@ -67,7 +67,7 @@ def pad_collate(batch, device):
 
     return torch.Tensor(_img).to(device), padded_mml_tensor.to(device)
 
-def preprocess(device, batch_size, rank, world_size):
+def preprocess(device, batch_size):#, rank, world_size):
 
     print('preprocessing data...')
 
