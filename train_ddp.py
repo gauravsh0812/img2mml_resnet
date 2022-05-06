@@ -13,7 +13,7 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
     trg_seqs = open('logs/train_targets.txt', 'w')
     pred_seqs = open('logs/train_predicted.txt', 'w')
 
-    for img, mml in train_dataloader:
+    for i, (img, mml) in enumerate(train_dataloader):
 
         if i%100==0: print(i)
         

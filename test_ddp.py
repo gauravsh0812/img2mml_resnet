@@ -14,7 +14,7 @@ def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write
 
     with torch.no_grad():
 
-        for img, mml in enumerate(test_dataloader):
+        for i, (img, mml) in enumerate(test_dataloader):
 
             if i%50==0: print(f'test_{i}')
             # initailize the hidden state
