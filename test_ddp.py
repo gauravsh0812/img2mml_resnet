@@ -3,7 +3,7 @@
 import torch
 from preprocessing.preprocess_images import preprocess_images
 
-def evaluate(model, batch_size, iterator, criterion, device, write_file):
+def evaluate(model, vocab, batch_size, iterator, criterion, device, write_file):
 
     model.eval()
 
@@ -39,12 +39,12 @@ def evaluate(model, batch_size, iterator, criterion, device, write_file):
                 #print('WRITING SEQ...')
                 batch_size = trg.shape[1]
                 for idx in range(batch_size):
-                    trg_arr = [trg_field.vocab.itos[itrg] for itrg in trg[:,idx]]#[trg_vocab_itos[itrg] for itrg in trg[:,idx]]
+                    trg_arr = [voacb[itrg] for itrg in trg[:,idx]]
                     trg_seq = " ".join(trg_arr)
                     #print(trg_seq)
                     trg_seqs.write(trg_seq + '\n')
 
-                    pred_arr = [trg_field.vocab.itos[ipred] for ipred in pred[:,idx].int()]#[trg_vocab_itos[ipred] for ipred in pred[:,idx].int()]
+                    pred_arr = [vocab[ipred] for ipred in pred[:,idx]]
                     pred_seq = " ".join(pred_arr)
                     pred_seqs.write(pred_seq+'\n')
 

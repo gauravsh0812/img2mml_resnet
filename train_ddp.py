@@ -4,7 +4,7 @@ import time
 import torch
 from preprocessing.preprocess_images import preprocess_images
 
-def train(model, batch_size, train_dataloader, optimizer, criterion,device, clip, write_file):
+def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,device, clip, write_file):
 
     model.train()  # train mode is ON i.e. dropout and normalization tech. will be used
 
@@ -31,17 +31,17 @@ def train(model, batch_size, train_dataloader, optimizer, criterion,device, clip
         # setting gradients to zero
         optimizer.zero_grad()
 
-        output, pred = model(trg_field, src, trg, True, True, 0.5)
+        output, pred = model(src, trg, True, True, 0.5)
 
         # translating and storing trg and pred sequences in batches
         if write_file:
             batch_size = trg.shape[1]
             for idx in range(batch_size):
-                trg_arr = [trg_field.vocab.itos[itrg] for itrg in trg[:,idx]] #[trg_vocab_itos[itrg] for itrg in trg[:,idx]] #
+                trg_arr = [vocab[itrg] for itrg in trg[:,idx]]
                 trg_seq = " ".join(trg_arr)
                 trg_seqs.write(trg_seq + '\n')
 
-                pred_arr = [trg_field.vocab.itos[ipred] for ipred in pred[:,idx].int()] #[trg_vocab_itos[ipred] for ipred in pred[:,idx].int()]#
+                pred_arr = [vocab[ipred] for ipred in pred[:,idx]]
                 pred_seq = " ".join(pred_arr)
                 pred_seqs.write(pred_seq+'\n')
 

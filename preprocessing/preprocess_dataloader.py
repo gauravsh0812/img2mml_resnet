@@ -116,14 +116,14 @@ def preprocess(device, batch_size, rank, world_size):
     imml_train = Img2MML_dataset(train_copy,
                                  vocab,
                                  tokenizer)
-
+    '''    FOR DDP
     # Create distributed sampler pinned to rank
     train_sampler = DistributedSampler(imml_train,
                                  num_replicas=world_size,
                                  rank=rank,
                                  shuffle=True,  # May be True
                                  seed=42)
-
+    '''
     # creating dataloader
     train_dataloader = DataLoader(imml_train,
                                   batch_size=batch_size,
@@ -133,12 +133,16 @@ def preprocess(device, batch_size, rank, world_size):
 
     # initailizing class Img2MML_dataset: test dataloader
     imml_test = Img2MML_dataset(test_copy, vocab, tokenizer)
+    ''' FOR DDP
     test_sampler = DistributedSampler(imml_test, num_replicas=world_size, rank=rank, shuffle=True, seed=42)
+    '''
     test_dataloader = DataLoader(imml_test, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=mypadcollate)
 
     # initailizing class Img2MML_dataset: val dataloader
     imml_val = Img2MML_dataset(val_copy, vocab, tokenizer)
+    ''' FOR DDP
     val_sampler = DistributedSampler(imml_train, num_replicas=world_size, rank=rank, shuffle=True, seed=42)
+    '''
     val_dataloader = DataLoader(imml_val, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=mypadcollate)
 
     return train_dataloader, test_dataloader, val_dataloader, vocab
