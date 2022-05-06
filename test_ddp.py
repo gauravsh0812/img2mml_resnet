@@ -18,7 +18,7 @@ def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write
 
             if i%50==0: print(f'test_{i}')
             # initailize the hidden state
-            trg = mml.to(device)
+            trg = mml.to(device, dtype=torch.int64)
             # print('@test trg shape:  ', trg.shape)
             batch_size = trg.shape[1]
 
@@ -32,19 +32,20 @@ def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write
 
             # trg = batch.mml.to(device)
 
-            output, pred = model(src, trg, True)   # turn off teacher_forcing
+            output, pred = model(src, trg, vocab, True)   # turn off teacher_forcing
 
             # translating and storing trg and pred sequences in batches
             if write_file:
                 #print('WRITING SEQ...')
                 batch_size = trg.shape[1]
                 for idx in range(batch_size):
-                    trg_arr = [voacb[itrg] for itrg in trg[:,idx]]
+
+                    trg_arr = [vocab.itos[itrg] for itrg in trg[:,idx]]
                     trg_seq = " ".join(trg_arr)
-                    #print(trg_seq)
+                    # print(trg_seq)
                     trg_seqs.write(trg_seq + '\n')
 
-                    pred_arr = [vocab[ipred] for ipred in pred[:,idx]]
+                    pred_arr = [vocab.itos[ipred] for ipred in pred.int()[:,idx]]
                     pred_seq = " ".join(pred_arr)
                     pred_seqs.write(pred_seq+'\n')
 
@@ -62,4 +63,4 @@ def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write
 
             epoch_loss += loss.item()
 
-        return epoch_loss / len(iterator)
+        return epoch_loss / len(test_dataloader)

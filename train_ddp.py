@@ -16,8 +16,8 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
     for i, (img, mml) in enumerate(train_dataloader):
 
         if i%100==0: print(i)
-        
-        trg = mml.to(device)
+
+        trg = mml.to(device, dtype=torch.int64)
         #print('@train trg shape:  ', trg.shape)
         batch_size = trg.shape[1]
 
@@ -31,17 +31,17 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         # setting gradients to zero
         optimizer.zero_grad()
 
-        output, pred = model(src, trg, True, True, 0.5)
+        output, pred = model(src, trg, vocab, True, True, 0.5)
 
         # translating and storing trg and pred sequences in batches
         if write_file:
             batch_size = trg.shape[1]
             for idx in range(batch_size):
-                trg_arr = [vocab[itrg] for itrg in trg[:,idx]]
+                trg_arr = [vocab.itos[itrg] for itrg in trg[:,idx]]
                 trg_seq = " ".join(trg_arr)
                 trg_seqs.write(trg_seq + '\n')
 
-                pred_arr = [vocab[ipred] for ipred in pred[:,idx]]
+                pred_arr = [vocab.itos[ipred] for ipred in pred.int()[:,idx]]
                 pred_seq = " ".join(pred_arr)
                 pred_seqs.write(pred_seq+'\n')
 
@@ -56,6 +56,8 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
 
         #trg = [(trg len - 1) * batch size]
         #output = [(trg len - 1) * batch size, output dim]
+        # print(output.dtype)
+        # print(trg.dtype)
         loss = criterion(output, trg)
 
         loss.backward()
@@ -66,4 +68,4 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
 
         epoch_loss += loss.item()
 
-    return epoch_loss/len(iterator)
+    return epoch_loss/len(train_dataloader)

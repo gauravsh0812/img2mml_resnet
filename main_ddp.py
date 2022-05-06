@@ -112,11 +112,11 @@ print(f'DDP_Model running on rank: {rank}...')
 setup(rank, world_size)
 '''
 device = torch.device(f'cuda:{rank}' if torch.cuda.is_available() else 'cpu')
- 
-''' FOR DDP 
+
+''' FOR DDP
 train_dataloader, test_dataloader, val_dataloade, vocab = preprocess(device, batch_size, rank, world_size)
 '''
-train_dataloader, test_dataloader, val_dataloade, vocab = preprocess(device, batch_size)
+train_dataloader, test_dataloader, val_dataloader, vocab = preprocess(device, batch_size)
 TRG_PAD_IDX = 0     # can be obtained from vocab in preprocessing <pad>:0, <unk>:1, <sos>:2, <eos>:3
 model = define_model(vocab, device)
 model.to(device)
@@ -134,7 +134,6 @@ print(f'The model has {count_parameters(ddp_model):,} trainable parameters')
 print('MODEL: ')
 print(model.apply(init_weights))
 print(f'The model has {count_parameters(model):,} trainable parameters')
-
 
 # optimizer and loss
 optimizer = optim.Adam(model.parameters(), lr=0.001)

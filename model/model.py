@@ -134,7 +134,8 @@ class Decoder(nn.Module):
 
     def forward(self, dec_src, encoder_out, hidden, cell):
         # Embedding
-        embeddings = self.embedding(dec_src.unsqueeze(0))  # (1, batch_size, embed_dim)
+        # print('dec_src:  ', dec_src)
+        embeddings = self.embedding(dec_src.int().unsqueeze(0))  # (1, batch_size, embed_dim)
         # print('dec emb shape: ', embeddings.shape)
         # print('h shape:  ', hidden.shape)
         # hidden shape = [1, B, hid]
@@ -178,7 +179,7 @@ class Img2Seq(nn.Module):
         c = self.init_c(mean_encoder_out)
         return h.unsqueeze(0), c.unsqueeze(0)
 
-    def forward(self, src, trg,  write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
+    def forward(self, src, trg,  vocab, write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
 
         batch_size = trg.shape[1]
         trg_len = trg.shape[0]
@@ -201,7 +202,7 @@ class Img2Seq(nn.Module):
 
         if write_flag:
             pred_seq_per_batch = torch.zeros(trg.shape)
-            init_idx = trg_field.vocab.stoi[trg_field.init_token] #trg_vocab_stoi[trg_field.init_token]
+            init_idx = vocab.stoi['<sos>']  # 2
             pred_seq_per_batch[0,:] = torch.full(dec_src.shape, init_idx)
 
         for t in range(1, trg_len):
