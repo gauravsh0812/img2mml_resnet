@@ -9,8 +9,8 @@ import os
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader, DistributedSampler
 from collections import Counter
-# from torchtext.legacy.vocab import Vocab
-from torchtext.vocab import Vocab
+from torchtext.legacy.vocab import Vocab
+# from torchtext.vocab import Vocab
 from torch.nn.utils.rnn import pad_sequence
 from functools import partial
 
@@ -96,6 +96,12 @@ def preprocess(device, batch_size):#, rank, world_size):
 
     # <unk>, <pad> will be prepended in the vocab file
     vocab = Vocab(counter, min_freq=10, specials=['<pad>', '<unk>', '<sos>', '<eos>'])
+
+    # writing vocab file...
+    vfile = open('logs/vocab.txt', 'w')
+    for vidx, vstr in vocab.stoi.items():
+        vfile.write(f'{vidx} \t {vstr} \n')
+
 
     # define tokenizer function
     tokenizer = lambda x: x.split()

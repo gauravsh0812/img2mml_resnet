@@ -7,6 +7,7 @@ import argparse
 import logging
 import itertools
 import torch
+import torchvision
 import torch.nn as nn
 import torch.optim as optim
 import torch.distributed as dist
@@ -100,7 +101,7 @@ def epoch_time(start_time, end_time):
 # parameters
 EPOCHS = 1
 CLIP = 1
-batch_size = 128
+batch_size = 64
 best_valid_loss = float('inf')
 
 '''  FOR DDP
@@ -134,6 +135,8 @@ print(f'The model has {count_parameters(ddp_model):,} trainable parameters')
 print('MODEL: ')
 print(model.apply(init_weights))
 print(f'The model has {count_parameters(model):,} trainable parameters')
+
+print('output dim:  ', len(vocab))
 
 # optimizer and loss
 optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -187,7 +190,10 @@ print('final model saved at:  ', f'trained_models/opennmt-version1-model.pt')
 ddp_model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))
 test_loss = evaluate(ddp_model, batch_size, test_dataloader, criterion, device, True)
 '''
-model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))
+# model = torchvision.models.resnet18(pretrained=True)
+model = Img2Seq
+# model.load_state_dict(checkpoint['state_dict'], strict=False)
+model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))#, strict=False)
 test_loss = evaluate(model, vocab, batch_size, test_dataloader, criterion, device, True)
 
 print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
