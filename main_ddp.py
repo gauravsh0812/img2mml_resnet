@@ -98,6 +98,18 @@ def epoch_time(start_time, end_time):
     elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
     return elapsed_mins, elapsed_secs
 
+def save_checkpoint(epoch, encoder, decoder):
+    """
+    Saves model checkpoint.
+    :param epoch: epoch number
+    :param encoder: encoder model
+    :param decoder: decoder model
+    """
+    state = {'epoch': epoch,
+             'encoder': encoder,
+             'decoder': decoder,
+    torch.save(state, 'trained_models/opennmt-version1-model.pt')
+
 # parameters
 EPOCHS = 1
 CLIP = 1
@@ -160,15 +172,16 @@ for epoch in range(EPOCHS):
     train_loss = train(ddp_model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
     val_loss = evaluate(ddp_model, batch_size, val_dataloader, criterion, device, True)
     '''
-    train_loss = train(model, vocab, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
-    val_loss = evaluate(model, vocab, batch_size, val_dataloader, criterion, device, True)
+    train_loss, encoder, decoder = train(model, vocab, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
+    val_loss, encoder, decoder = evaluate(model, vocab, batch_size, val_dataloader, criterion, device, True)
     end_time=time.time()
     epoch_mins, epoch_secs = epoch_time(start_time, end_time)
 
     if val_loss < best_valid_loss:
         best_valid_loss = val_loss
-        if rank == 0:
-            torch.save(model.state_dict(), f'trained_models/opennmt-version1-model.pt')
+        #if rank == 0:
+        torch.save(model.state_dict(), f'trained_models/opennmt-version1-model.pt')
+        # save_checkpoint(epoch, encoder, decoder)
 
     # logging
     print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
@@ -191,7 +204,7 @@ ddp_model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'
 test_loss = evaluate(ddp_model, batch_size, test_dataloader, criterion, device, True)
 '''
 # model = torchvision.models.resnet18(pretrained=True)
-model = Img2Seq
+
 # model.load_state_dict(checkpoint['state_dict'], strict=False)
 model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))#, strict=False)
 test_loss = evaluate(model, vocab, batch_size, test_dataloader, criterion, device, True)

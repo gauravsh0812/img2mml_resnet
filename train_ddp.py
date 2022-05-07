@@ -67,5 +67,6 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         optimizer.step()
 
         epoch_loss += loss.item()
+        net_loss = epoch_loss/len(train_dataloader)
 
-    return epoch_loss/len(train_dataloader)
+    return net_loss, encoder, decoder

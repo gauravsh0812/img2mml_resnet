@@ -62,5 +62,6 @@ def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write
             loss = criterion(output, trg)
 
             epoch_loss += loss.item()
+            net_loss = epoch_loss / len(test_dataloader)
 
-        return epoch_loss / len(test_dataloader)
+        return net_loss, encoder, decoder
