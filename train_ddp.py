@@ -31,7 +31,7 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         # setting gradients to zero
         optimizer.zero_grad()
 
-        output, pred = model(src, trg, vocab, True, True, 0.5)
+        output, pred, encoder, decoder = model(src, trg, vocab, True, True, 0.5)
 
         # translating and storing trg and pred sequences in batches
         if write_file:

@@ -32,7 +32,7 @@ def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write
 
             # trg = batch.mml.to(device)
 
-            output, pred = model(src, trg, vocab, True)   # turn off teacher_forcing
+            output, pred, encoder, decoder = model(src, trg, vocab, True)   # turn off teacher_forcing
 
             # translating and storing trg and pred sequences in batches
             if write_file:

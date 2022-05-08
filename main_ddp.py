@@ -107,7 +107,7 @@ def save_checkpoint(epoch, encoder, decoder):
     """
     state = {'epoch': epoch,
              'encoder': encoder,
-             'decoder': decoder,
+             'decoder': decoder}
     torch.save(state, 'trained_models/opennmt-version1-model.pt')
 
 # parameters
@@ -207,7 +207,7 @@ test_loss = evaluate(ddp_model, batch_size, test_dataloader, criterion, device, 
 
 # model.load_state_dict(checkpoint['state_dict'], strict=False)
 model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))#, strict=False)
-test_loss = evaluate(model, vocab, batch_size, test_dataloader, criterion, device, True)
+test_loss, encoder, decoder = evaluate(model, vocab, batch_size, test_dataloader, criterion, device, True)
 
 print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
 loss_file.write(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
