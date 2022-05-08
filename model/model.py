@@ -61,23 +61,27 @@ class Attention(nn.Module):
         self.relu = nn.ReLU()
         self.softmax = nn.Softmax(dim=1)
         self.sigmoid = nn.Sigmoid()
+        self.enc_1_layer = nn.Linear(encoder_dim, 1)
 
 
     def forward(self, encoder_out, hidden):
         attn1 = self.enclayer(encoder_out)   # [B, num_pixels, attention_dim]
         attn2 = self.hidlayer(hidden)       # [1, B, attn_dim]
         net_attn = self.relu(attn1.permute(1,0,2) + attn2)   # [num, B, attn_dim]
-        net_attn = self.attnlayer(net_attn).squeeze(2)     # [num, B]
-        alpha = self.softmax(net_attn.permute(1,0))  # [B, num]
+        #net_attn = self.attnlayer(net_attn).squeeze(2)     # [num, B]
+        net_attn = self.attnlayer(net_attn)     # [num, B, 1]
+        alpha = self.softmax(net_attn.permute(1,2, 0))  # [B, 1, num]
         # print('alpha:  ', alpha.shape)
-        weighted_attn = (encoder_out * alpha.unsqueeze(2)).sum(dim=1)   # [B, encoder_dim]
+        weighted_attn = torch.bmm(alpha, encoder_out).sum(dim=2) # [B,1,enc_dim] #(encoder_out * alpha.unsqueeze(2)).sum(dim=1)   # [B, encoder_dim]
         # print('wght_attn:  ', weighted_attn.shape)
         gate = self.sigmoid(self.enc_hidlayer(hidden.squeeze(0)))    # [B, enc_dim]
         # print('gate:  ', gate.shape)
-        final_attn_encoding = gate * weighted_attn   # [B, enc_dim]
+        # final_attn_encoding = gate * weighted_attn   # [B, enc_dim]
+        final_attn_encoding = torch.bmm(gate.unsqueeze(2), weighted_attn)   # [B, enc_dim, enc_dim]
+        final_attn_encoding = self.enc_1_layer(final_attn_encoding)   # [B, enc_dim, 1]
         # print('final_attn_encoding:  ', final_attn_encoding.shape)
 
-        return final_attn_encoding.unsqueeze(0)
+        return final_attn_encoding.permute(2, 0, 1)#.unsqueeze(0)
 
 
 class Decoder(nn.Module):
