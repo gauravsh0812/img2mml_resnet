@@ -35,6 +35,9 @@ rank = args.rank
 '''
 rank = args.gpu_num
 
+# os.environ["CUDA_VISIBLE_DEVICES"]="1"
+# os.environ['CUDA_LAUNCH_BLOCKING']="1"
+
 def define_model(vocab, DEVICE):#, TRG_PAD_IDX, OUTPUT_DIM):
     '''
     defining the model
@@ -124,7 +127,12 @@ rank = rank                               # sequential id of GPU
 print(f'DDP_Model running on rank: {rank}...')
 setup(rank, world_size)
 '''
-device = torch.device(f'cuda:{rank}' if torch.cuda.is_available() else 'cpu')
+# device = torch.device(f'cuda:{rank}' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda'if torch.cuda.is_available() else 'cpu')
+torch.cuda.set_device(1)
+assert torch.cuda.current_device() == 1
+# print(torch.cuda.is_available())
+
 
 ''' FOR DDP
 train_dataloader, test_dataloader, val_dataloade, vocab = preprocess(device, batch_size, rank, world_size)
@@ -149,6 +157,9 @@ print(model.apply(init_weights))
 print(f'The model has {count_parameters(model):,} trainable parameters')
 
 print('output dim:  ', len(vocab))
+
+# print('cuda available:  ', torch.cuda.is_available())
+# print('current device:  ', torch.cuda.current_device())
 
 # optimizer and loss
 optimizer = optim.Adam(model.parameters(), lr=0.001)
