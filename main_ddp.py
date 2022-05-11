@@ -127,6 +127,7 @@ rank = rank                               # sequential id of GPU
 print(f'DDP_Model running on rank: {rank}...')
 setup(rank, world_size)
 '''
+
 # device = torch.device(f'cuda:{rank}' if torch.cuda.is_available() else 'cpu')
 device = torch.device('cuda'if torch.cuda.is_available() else 'cpu')
 torch.cuda.set_device(1)
