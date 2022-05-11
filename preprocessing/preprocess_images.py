@@ -1,4 +1,4 @@
-import torch, os
+import torch, os, pandas
 from torchvision import transforms
 from PIL import Image
 
@@ -20,15 +20,16 @@ def pad_image(IMAGE):
 
 def preprocess_images(img_batch, datapath):
     """
-RuntimeError: only Tensors of floating point dtype can require gradients    Crop, padding, and downsample the image.
+    RuntimeError: only Tensors of floating point dtype can require gradients    Crop, padding, and downsample the image.
     :params img_batch: batch of images
     :return: processed images
     """
 
-    new_img_batch = []
+    images_dict = {}
+#    new_img_batch = []
     for image_label in img_batch:
         # opening the image
-        image_label = str(image_label.cpu().numpy())
+        # image_label = str(image_label.cpu().numpy())
         IMAGE = Image.open(os.path.join(datapath, f'{image_label}.png'))
 
         # crop the image
@@ -41,6 +42,10 @@ RuntimeError: only Tensors of floating point dtype can require gradients    Crop
         convert = transforms.ToTensor()
         IMAGE = convert(IMAGE)
 
-        new_img_batch.append(IMAGE)
+#        new_img_batch.append(IMAGE)
+        images_dict[f'image_label'] = IMAGE
 
-    return (new_img_batch)
+        df = pd.DataFrame(images_dict, columns=['ID','IMAGES'])
+        train.to_csv('data/images_tensor.csv', index=True)
+
+#    return (new_img_batch)

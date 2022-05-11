@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import time
+import time, pandas
 import torch
 from preprocessing.preprocess_images import preprocess_images
 
@@ -12,6 +12,7 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
 
     trg_seqs = open('logs/train_targets.txt', 'w')
     pred_seqs = open('logs/train_predicted.txt', 'w')
+    src_tensors = pandas.read_csv('data/images_tensor.csv')
 
     for i, (img, mml) in enumerate(train_dataloader):
 
@@ -27,9 +28,14 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
 
         batch_size = trg.shape[1]
 
+        src = []
+        for itensor in img:
+            row = src_tensors.loc[src_tensors['ID'] == itensor]
+            src.append(row.iloc[0, -1])
+
         # grab the image and preprocess it
         #print('@train img shape:  ', img.shape)
-        src = preprocess_images(img.int(), 'data/images/')
+        # src = preprocess_images(img.int(), 'data/images/')
         # src will be list of image tensors
         # need to pack them to create a single batch tensor
         src = torch.stack(src).to(device)

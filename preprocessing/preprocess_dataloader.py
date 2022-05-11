@@ -13,6 +13,7 @@ from torchtext.legacy.vocab import Vocab
 # from torchtext.vocab import Vocab
 from torch.nn.utils.rnn import pad_sequence
 from functools import partial
+from preprocess_images import preprocess_images
 
 
 # set up seed
@@ -67,6 +68,7 @@ def pad_collate(batch, device):
 
     return torch.Tensor(_img).to(device), padded_mml_tensor.to(device)
 
+
 def preprocess(device, batch_size):#, rank, world_size):
 
     print('preprocessing data...')
@@ -75,7 +77,7 @@ def preprocess(device, batch_size):#, rank, world_size):
     mml_txt = open('data/mml.txt').read().split('\n')[:-1]
     image_num = range(0,len(mml_txt))
 
-
+    preprocess_images(image_num,'data/images/')    
 
     # adding <sos> and <eos> tokens then creating a dataframe
     raw_data = {'ID': [f'{num}' for num in image_num],
@@ -142,13 +144,23 @@ def preprocess(device, batch_size):#, rank, world_size):
     ''' FOR DDP
     test_sampler = DistributedSampler(imml_test, num_replicas=world_size, rank=rank, shuffle=True, seed=42)
     '''
-    test_dataloader = DataLoader(imml_test, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=mypadcollate)
+    test_dataloader = DataLoader(imml_test,
+                                 batch_size=batch_size,
+                                 num_workers=4,
+                                 shuffle=False,
+                                 collate_fn=mypadcollate,
+                                 pin_memory=False)
 
     # initailizing class Img2MML_dataset: val dataloader
     imml_val = Img2MML_dataset(val_copy, vocab, tokenizer)
     ''' FOR DDP
     val_sampler = DistributedSampler(imml_train, num_replicas=world_size, rank=rank, shuffle=True, seed=42)
     '''
-    val_dataloader = DataLoader(imml_val, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=mypadcollate)
+    val_dataloader = DataLoader(imml_val,
+                                batch_size=batch_size,
+                                num_workers=4,
+                                shuffle=False,
+                                collate_fn=mypadcollate,
+                                pin_memory=False)
 
     return train_dataloader, test_dataloader, val_dataloader, vocab
