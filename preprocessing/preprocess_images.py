@@ -45,7 +45,7 @@ def preprocess_images(img_batch, datapath):
 #        new_img_batch.append(IMAGE)
         images_dict[f'image_label'] = IMAGE
 
-        df = pd.DataFrame(images_dict, columns=['ID','IMAGES'])
-        train.to_csv('data/images_tensor.csv', index=True)
+        df = pandas.DataFrame(images_dict, columns=['ID','IMAGES'])
+        df.to_csv('data/images_tensor.csv', index=True)
 
 #    return (new_img_batch)

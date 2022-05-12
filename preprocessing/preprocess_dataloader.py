@@ -13,7 +13,7 @@ from torchtext.legacy.vocab import Vocab
 # from torchtext.vocab import Vocab
 from torch.nn.utils.rnn import pad_sequence
 from functools import partial
-from preprocess_images import preprocess_images
+from preprocessing.preprocess_images import preprocess_images
 
 
 # set up seed
