@@ -4,12 +4,14 @@ import matplotlib.pyplot as plt
 from multiprocessing import Pool, Lock, TimeoutError
 from torchvision import transforms
 from PIL import Image
+from collections import defaultdict
+
 
 # finding mean width and height for this batch
-# Ws, Hs = [], []
+Ws, Hs = [], []
 
 # final image tensor for current batche
-# new_img_batch = []
+new_img_batch = []
 
 def crop_image(image, size):
     return transforms.functional.crop(image, 0, 0, size[0], size[1])
@@ -31,23 +33,20 @@ def pad_image(IMAGE):
     result.paste(IMAGE,(left, top))
     return result
 
-def mean_w_h(img_batch):
+def mean_w_h(img):
     '''
     finding the mean width and height of images for this batch
     '''
-    # global Ws, Hs
+    global Ws, Hs
 
-    Ws, Hs = [], []
-    for _i in img_batch:
-        _I = Image.open(os.path.join('data/images', f'{_i}.png'))
-        _w, _h = _I.size
-        Ws.append(_w)
-        Hs.append(_h)
-        mean_w, mean_h = numpy.mean(Ws), numpy.mean(Hs)
-    return mean_w, mean_h
+    # for _i in img_batch:
+    _I = Image.open(os.path.join(f'data/images/{img}')
+    _w, _h = _I.size
+    Ws.append(_w)
+    Hs.append(_h)
 
 
-def preprocess_images(img_batch):
+def preprocess_images(images):
     """
     RuntimeError: only Tensors of floating point dtype can require gradients
     Crop, padding, and downsample the image.
@@ -91,18 +90,28 @@ def preprocess_images(img_batch):
 
     return (new_img_batch)
 
-#
-# def main():
-#     # finding mean width and height
-#     with Pool(multiprocessing.cpu_count()-10) as pool:
-#         pool.map(mean_w_h, img_batch)
-#
-#     with Pool(multiprocessing.cpu_count()-10) as pool:
-#         pool.map(parallel_preprocess_images, img_batch)
-#
-#
-# # def preprocess_images(img_batch):
-# if __name__ == "__main__":
-#     main()
+def main():
 
-    # return new_img_batch
+    images = os.listdir('data/images')
+
+    # finding mean width and height
+    with Pool(multiprocessing.cpu_count()-5) as pool:
+        pool.map(mean_w_h, images)
+
+    # with Pool(multiprocessing.cpu_count()-10) as pool:
+    #     pool.map(preprocess_images, img_batch)
+
+    # plotting
+    threshold = 0
+    w_dict, h_dict = defaultdict(int), defaultdict(int)
+    for (w,h) in zip(Ws, Hs):
+        if threshold <=w< threshold+20:
+            w_dict[f'{threshold}-{threshold+20}']+=1
+        if threshold <=h< threshold+2:
+            h_dict[f'{threshold}-{threshold+20}']+=1
+    plt.bar(list(w_dict.keys()), w_dict.values(), color='b')
+    plt.show()
+
+    
+if __name__ == "__main__":
+    main()
