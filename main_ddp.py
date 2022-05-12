@@ -116,7 +116,7 @@ def save_checkpoint(epoch, encoder, decoder):
 # parameters
 EPOCHS = 1
 CLIP = 1
-batch_size = 250
+batch_size = 128
 best_valid_loss = float('inf')
 
 '''  FOR DDP
@@ -130,8 +130,8 @@ setup(rank, world_size)
 
 # device = torch.device(f'cuda:{rank}' if torch.cuda.is_available() else 'cpu')
 device = torch.device('cuda'if torch.cuda.is_available() else 'cpu')
-torch.cuda.set_device(1)
-assert torch.cuda.current_device() == 1
+# torch.cuda.set_device(1)
+# assert torch.cuda.current_device() == 1
 # print(torch.cuda.is_available())
 
 
@@ -153,11 +153,11 @@ print(f'The model has {count_parameters(ddp_model):,} trainable parameters')
 
 '''
 
-print('MODEL: ')
-print(model.apply(init_weights))
-print(f'The model has {count_parameters(model):,} trainable parameters')
-
-print('output dim:  ', len(vocab))
+# print('MODEL: ')
+# print(model.apply(init_weights))
+# print(f'The model has {count_parameters(model):,} trainable parameters')
+#
+# print('output dim:  ', len(vocab))
 
 # print('cuda available:  ', torch.cuda.is_available())
 # print('current device:  ', torch.cuda.current_device())

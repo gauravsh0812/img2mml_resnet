@@ -2,7 +2,7 @@
 
 import time, pandas
 import torch
-from preprocessing.preprocess_images import preprocess_images
+# from preprocessing.preprocess_images import preprocess_images
 
 def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,device, clip, write_file):
 
@@ -19,26 +19,9 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         if i%10==0: print(i)
 
         trg = mml.to(device, dtype=torch.int64)
-#        print('@train trg shape:  ', trg.shape)
-#        if device.type == 'cuda':
-#            print(torch.cuda.get_device_name(0))
-#            print('Memory Usage:')
-#            print('Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
-#            print('Cached:   ', round(torch.cuda.memory_reserved(0)/1024**3,1), 'GB')
-
         batch_size = trg.shape[1]
-
-        src = []
-        for itensor in img:
-            row = src_tensors.loc[src_tensors['ID'] == itensor]
-            src.append(row.iloc[0, -1])
-
-        # grab the image and preprocess it
-        #print('@train img shape:  ', img.shape)
-        # src = preprocess_images(img.int(), 'data/images/')
-        # src will be list of image tensors
-        # need to pack them to create a single batch tensor
-        src = torch.stack(src).to(device)
+        src = img.to(device)
+        # src = torch.stack(src).to(device)
 
         # setting gradients to zero
         optimizer.zero_grad()
@@ -63,13 +46,6 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         output = output[1:].view(-1, output_dim)
         trg = trg[1:].view(-1)
 
-        #print('trg2: ', trg.requires_grad)
-        #print(output.requires_grad)
-
-        #trg = [(trg len - 1) * batch size]
-        #output = [(trg len - 1) * batch size, output dim]
-        # print(output.dtype)
-        # print(trg.dtype)
         loss = criterion(output, trg)
 
         loss.backward()

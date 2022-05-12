@@ -9,11 +9,12 @@ import os
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader, DistributedSampler
 from collections import Counter
-from torchtext.legacy.vocab import Vocab
-# from torchtext.vocab import Vocab
+# from torchtext.legacy.vocab import Vocab
+from torchtext.vocab import Vocab
 from torch.nn.utils.rnn import pad_sequence
 from functools import partial
 from preprocessing.preprocess_images import preprocess_images
+
 
 
 # set up seed
@@ -47,26 +48,19 @@ class Img2MML_dataset(Dataset):
 class My_pad_collate(object):
     def __init__(self, device):
         self.device = device
-    def __call__(self, batch):
 
+    def __call__(self, batch):
         _img, _mml = zip(*batch)
 
         # padding
         padded_mml_tensor = pad_sequence(_mml, padding_value=0)
         _img = [int(i) for i in _img]
 
-        return torch.Tensor(_img).to(self.device), padded_mml_tensor.to(self.device)
-
-
-def pad_collate(batch, device):
-
-    _img, _mml = zip(*batch)
-
-    # padding
-    padded_mml_tensor = pad_sequence(_mml, padding_value=0)
-    _img = [int(i) for i in _img]
-
-    return torch.Tensor(_img).to(device), padded_mml_tensor.to(device)
+        # preprocessing images for this batch
+        new_img_batch = preprocess_images(_img)
+        new_img_batch = torch.stack(new_img_batch)
+        # return torch.Tensor(_img).to(self.device), padded_mml_tensor.to(self.device)
+        return new_img_batch.to(self.device), padded_mml_tensor.to(self.device)
 
 
 def preprocess(device, batch_size):#, rank, world_size):
@@ -77,19 +71,26 @@ def preprocess(device, batch_size):#, rank, world_size):
     mml_txt = open('data/mml.txt').read().split('\n')[:-1]
     image_num = range(0,len(mml_txt))
 
-    preprocess_images(image_num,'data/images/')    
+    # creating an empty Dataframe for images
+    # this Dataframe will hold all the preprocessed images tensor
+    # we will access this df in preprocess_images
+    raw_image_data = {'ID': [f'{num}' for num in image_num],
+                       'IMG': [0 for _ in image_num]}
+    img_df = pd.DataFrame(raw_image_data, columns=['ID','IMG'])
+    img_df.to_csv('data/images_tensor.csv', index=True)
 
     # adding <sos> and <eos> tokens then creating a dataframe
-    raw_data = {'ID': [f'{num}' for num in image_num],
-                'MML': [('<sos> '+ mml + ' <eos>') for mml in mml_txt]}
+    raw_mml_data = {'ID': [f'{num}' for num in image_num],
+                    'MML': [('<sos> '+ mml + ' <eos>') for mml in mml_txt]}
 
-    df = pd.DataFrame(raw_data, columns=['ID','MML'])
+    df = pd.DataFrame(raw_mml_data, columns=['ID','MML'])
 
     train_val, test = train_test_split(df, test_size = 0.1)
     train, val = train_test_split(train_val, test_size=0.1)
 
     # sort train dataset
     train = train.sort_values(by='MML', key=lambda x: x.str.len())
+    train = train.iloc[11:, :]
 
     # build vocab
     counter = Counter()

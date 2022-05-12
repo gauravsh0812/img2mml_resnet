@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import torch
-from preprocessing.preprocess_images import preprocess_images
+# from preprocessing.preprocess_images import preprocess_images
 
 def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write_file):
 
