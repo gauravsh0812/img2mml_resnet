@@ -85,8 +85,8 @@ def preprocess_images(images):
         # convert to tensor
         convert = transforms.ToTensor()
         IMAGE = convert(IMAGE)
-        print(IMAGE)
-        save_image(IMAGE, f'image_tensors/{image_label}')
+        
+        save_image(IMAGE, f'data/image_tensors/{image_label}')
 
         # appending the final image tensor
         # new_img_batch[image_label.split('.')[0]]=IMAGE
@@ -97,6 +97,7 @@ def preprocess_images(images):
 def main():
 
     images = os.listdir('data/images')
+    preprocess_images(images)
 
     '''
     # finding mean width and height
