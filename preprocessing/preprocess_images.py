@@ -1,4 +1,4 @@
-import torch, os, pandas, numpy, math
+import torch, os, pandas, numpy, math, json
 import multiprocessing
 import matplotlib.pyplot as plt
 from multiprocessing import Pool, Lock, TimeoutError
@@ -69,6 +69,8 @@ def preprocess_images(images):
 
     new_img_batch = {}
     for idx, image_label in enumerate(images):
+
+        if idx%10000==0:print(idx)
         # opening the image
         IMAGE = Image.open(os.path.join('data/images', f'{image_label}'))
 
@@ -123,8 +125,10 @@ def main():
 
     '''
     new_img_batch = preprocess_images(images)
-    img_df = pd.DataFrame(new_img_batch, columns=['ID','IMG'])
-    img_df.to_csv('data/images_tensor.csv', index=True)
+    json.dumps(new_img_batch, open('data/image_tensor.json', 'w'), indent=4)
+
+    # img_df = pandas.DataFrame(new_img_batch, columns=['ID','IMG'])
+    # img_df.to_csv('data/images_tensor.csv', index=True)
 
 
 if __name__ == "__main__":
