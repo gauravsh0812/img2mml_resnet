@@ -85,6 +85,7 @@ def preprocess_images(images):
         # convert to tensor
         convert = transforms.ToTensor()
         IMAGE = convert(IMAGE)
+        print(IMAGE)
         save_image(IMAGE, f'image_tensors/{image_label}')
 
         # appending the final image tensor
