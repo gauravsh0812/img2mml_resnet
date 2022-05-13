@@ -1,10 +1,9 @@
-import torch, os, pandas, numpy, math, json
-import multiprocessing
+import torch, os
 import matplotlib.pyplot as plt
 from multiprocessing import Pool, Lock, TimeoutError
 from torchvision import transforms
+from torchvision.utils import save_image
 from PIL import Image
-from collections import defaultdict
 
 
 # finding mean width and height for this batch
@@ -67,7 +66,7 @@ def preprocess_images(images):
     # mean_w, mean_h = mean_w_h(img_batch)
     mean_w, mean_h = 500, 50
 
-    new_img_batch = {}
+    # new_img_batch = {}
     for idx, image_label in enumerate(images):
 
         if idx%10000==0:print(idx)
@@ -86,12 +85,13 @@ def preprocess_images(images):
         # convert to tensor
         convert = transforms.ToTensor()
         IMAGE = convert(IMAGE)
+        save_image(IMAGE, f'image_tensors/{image_label}')
 
         # appending the final image tensor
-        new_img_batch[image_label.split('.')[0]]=IMAGE
+        # new_img_batch[image_label.split('.')[0]]=IMAGE
 
 
-    return (new_img_batch)
+    # return (new_img_batch)
 
 def main():
 
@@ -124,8 +124,6 @@ def main():
     #plt.show()
 
     '''
-    new_img_batch = preprocess_images(images)
-    json.dumps(new_img_batch, open('data/image_tensor.json', 'w'), indent=4)
 
     # img_df = pandas.DataFrame(new_img_batch, columns=['ID','IMG'])
     # img_df.to_csv('data/images_tensor.csv', index=True)
