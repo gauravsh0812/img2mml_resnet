@@ -67,7 +67,10 @@ class Attention(nn.Module):
     def forward(self, encoder_out, hidden):
         attn1 = self.enclayer(encoder_out)   # [B, num_pixels, attention_dim]
         attn2 = self.hidlayer(hidden)       # [1, B, attn_dim]
+        # print('attn1: ', attn1.shape)
+        # print('attn2: ', attn2.permute(1,0,2).shape)
         net_attn = self.relu(attn1.permute(1,0,2) + attn2)   # [num, B, attn_dim]
+        # print('net attn: ', net_attn.shape)
         #net_attn = self.attnlayer(net_attn).squeeze(2)     # [num, B]
         net_attn = self.attnlayer(net_attn)     # [num, B, 1]
         alpha = self.softmax(net_attn.permute(1,2, 0))  # [B, 1, num]

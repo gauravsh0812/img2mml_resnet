@@ -12,11 +12,11 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
 
     trg_seqs = open('logs/train_targets.txt', 'w')
     pred_seqs = open('logs/train_predicted.txt', 'w')
-    src_tensors = pandas.read_csv('data/images_tensor.csv')
+    
 
     for i, (img, mml) in enumerate(train_dataloader):
 
-        if i%100==0: print(i)
+        # if i%100==0: print(i)
 
         trg = mml.to(device, dtype=torch.int64)
         batch_size = trg.shape[1]
@@ -24,11 +24,11 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         # loading image Tensors
         srcTensor = []
         for _i in img:
-            srcTensor.append(torch.load(f'data/image_tensors/{_i}.txt'))
+            srcTensor.append(torch.load(f'data/image_tensors/{int(_i)}.txt'))
         src = torch.stack(srcTensor).to(device)
 
-        print('trg_shape: ', trg.shape)
-        print('src shape:  ', src.shape)
+        #print('trg_shape: ', trg.shape)
+        #print('src shape:  ', src.shape)
 
         # setting gradients to zero
         optimizer.zero_grad()

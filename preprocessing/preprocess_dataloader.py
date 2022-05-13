@@ -56,10 +56,10 @@ class My_pad_collate(object):
         _img = [int(i) for i in _img]
 
         # preprocessing images for this batch
-        new_img_batch = preprocess_images(_img)
-        new_img_batch = torch.stack(new_img_batch)
-        # return torch.Tensor(_img).to(self.device), padded_mml_tensor.to(self.device)
-        return new_img_batch.to(self.device), padded_mml_tensor.to(self.device)
+        #new_img_batch = preprocess_images(_img)
+        #new_img_batch = torch.stack(new_img_batch)
+        return torch.Tensor(_img).to(self.device), padded_mml_tensor.to(self.device)
+        #return new_img_batch.to(self.device), padded_mml_tensor.to(self.device)
 
 
 def preprocess(device, batch_size):#, rank, world_size):
