@@ -20,8 +20,15 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
 
         trg = mml.to(device, dtype=torch.int64)
         batch_size = trg.shape[1]
-        src = img.to(device)
-        # src = torch.stack(src).to(device)
+
+        # loading image Tensors
+        srcTensor = []
+        for _i in img:
+            srcTensor.append(torch.load(f'data/image_tensors/{_i}.txt'))
+        src = torch.stack(srcTensor).to(device)
+
+        print('trg_shape: ', trg.shape)
+        print('src shape:  ', src.shape)
 
         # setting gradients to zero
         optimizer.zero_grad()

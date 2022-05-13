@@ -22,12 +22,11 @@ def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write
             # print('@test trg shape:  ', trg.shape)
             batch_size = trg.shape[1]
 
-            # grab the image and preprocess it
-            # print('@test img shape:  ', img.shape)
-            src = preprocess_images(img.int(), 'data/images/')
-            # src will be list of image tensors
-            # need to pack them to create a single batch tensor
-            src = torch.stack(src).to(device)
+            # loading image Tensors
+            srcTensor = []
+            for _i in img:
+                srcTensor.append(torch.load(f'data/image_tensors/{_i}.txt'))
+            src = torch.stack(srcTensor).to(device)
 
 
             # trg = batch.mml.to(device)

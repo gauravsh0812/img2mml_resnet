@@ -13,7 +13,6 @@ from torchtext.legacy.vocab import Vocab
 # from torchtext.vocab import Vocab
 from torch.nn.utils.rnn import pad_sequence
 from functools import partial
-from preprocessing.preprocess_images import preprocess_images
 
 
 
@@ -71,14 +70,6 @@ def preprocess(device, batch_size):#, rank, world_size):
     mml_txt = open('data/mml.txt').read().split('\n')[:-1]
     image_num = range(0,len(mml_txt))
 
-    # creating an empty Dataframe for images
-    # this Dataframe will hold all the preprocessed images tensor
-    # we will access this df in preprocess_images
-    raw_image_data = {'ID': [f'{num}' for num in image_num],
-                       'IMG': [0 for _ in image_num]}
-    img_df = pd.DataFrame(raw_image_data, columns=['ID','IMG'])
-    img_df.to_csv('data/images_tensor.csv', index=True)
-
     # adding <sos> and <eos> tokens then creating a dataframe
     raw_mml_data = {'ID': [f'{num}' for num in image_num],
                     'MML': [('<sos> '+ mml + ' <eos>') for mml in mml_txt]}
@@ -90,7 +81,6 @@ def preprocess(device, batch_size):#, rank, world_size):
 
     # sort train dataset
     train = train.sort_values(by='MML', key=lambda x: x.str.len())
-    train = train.iloc[11:, :]
 
     # build vocab
     counter = Counter()
@@ -104,7 +94,6 @@ def preprocess(device, batch_size):#, rank, world_size):
     vfile = open('logs/vocab.txt', 'w')
     for vidx, vstr in vocab.stoi.items():
         vfile.write(f'{vidx} \t {vstr} \n')
-
 
     # define tokenizer function
     tokenizer = lambda x: x.split()
