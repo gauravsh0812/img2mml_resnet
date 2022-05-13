@@ -10,4 +10,4 @@ python3 preprocessing/preprocess_images.py
 
 ```
 python3 main_ddp.py --gpu_num 1
-'''
+```
