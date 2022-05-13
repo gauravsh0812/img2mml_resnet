@@ -130,8 +130,8 @@ setup(rank, world_size)
 
 # device = torch.device(f'cuda:{rank}' if torch.cuda.is_available() else 'cpu')
 device = torch.device('cuda'if torch.cuda.is_available() else 'cpu')
-# torch.cuda.set_device(1)
-# assert torch.cuda.current_device() == 1
+torch.cuda.set_device(1)
+assert torch.cuda.current_device() == 1
 # print(torch.cuda.is_available())
 
 

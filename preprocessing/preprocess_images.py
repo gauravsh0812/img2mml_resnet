@@ -8,7 +8,7 @@ from collections import defaultdict
 
 
 # finding mean width and height for this batch
-Ws, Hs = [], []
+# Ws, Hs = [], []
 
 # final image tensor for current batche
 new_img_batch = []
@@ -27,24 +27,26 @@ def pad_image(IMAGE):
     bottom = 8
     width, height = IMAGE.size
     new_width = width + right + left
-    new_height = height + top + bottom
-    # #return (Image.new(IMAGE.mode, (new_width, new_height), (255,255, 255)))
+    new_height = height + top + bottom 
     result = Image.new(IMAGE.mode, (new_width, new_height))
     result.paste(IMAGE,(left, top))
     return result
 
-def mean_w_h(img):
+def mean_w_h(img_batch):
     '''
     finding the mean width and height of images for this batch
     '''
-    global Ws, Hs
+   # global Ws, Hs
+    
+    Ws, Hs = [], []
 
-    # for _i in img_batch:
-    _I = Image.open(os.path.join(f'data/images/{img}')
-    _w, _h = _I.size
-    Ws.append(_w)
-    Hs.append(_h)
-
+    for _i in img_batch:
+        _I = Image.open(os.path.join(f'data/images/{_i}')) 
+        _w, _h = _I.size
+        Ws.append(_w)
+        Hs.append(_h)
+    
+    return Ws, Hs
 
 def preprocess_images(images):
     """
@@ -62,10 +64,11 @@ def preprocess_images(images):
     # torch.set_printoptions(profile="full")
 
     # mean width and height
-    mean_w, mean_h = mean_w_h(img_batch)
+    # mean_w, mean_h = mean_w_h(img_batch)
+    mean_w, mean_h = 500, 50
 
-    new_img_batch = []
-    for idx, image_label in enumerate(img_batch):
+    # new_img_batch = []
+    for idx, image_label in enumerate(images):
         # opening the image
         IMAGE = Image.open(os.path.join('data/images', f'{image_label}.png'))
 
@@ -93,25 +96,35 @@ def preprocess_images(images):
 def main():
 
     images = os.listdir('data/images')
-
+    '''
     # finding mean width and height
     with Pool(multiprocessing.cpu_count()-5) as pool:
         pool.map(mean_w_h, images)
-
-    # with Pool(multiprocessing.cpu_count()-10) as pool:
-    #     pool.map(preprocess_images, img_batch)
-
+    '''
+    preprocess_images(images)
+    
+    '''
     # plotting
-    threshold = 0
-    w_dict, h_dict = defaultdict(int), defaultdict(int)
-    for (w,h) in zip(Ws, Hs):
-        if threshold <=w< threshold+20:
-            w_dict[f'{threshold}-{threshold+20}']+=1
-        if threshold <=h< threshold+2:
-            h_dict[f'{threshold}-{threshold+20}']+=1
-    plt.bar(list(w_dict.keys()), w_dict.values(), color='b')
-    plt.show()
+    
+    w_dict, h_dict = {}, {}
+    for threshold in range(0, 80, 5):
+        for (w,h) in zip(Ws, Hs):
+            if threshold <=h< threshold+5:
+                if f'{threshold}-{threshold+5}' in h_dict.keys():
+                    h_dict[f'{threshold}-{threshold+5}']+=1
+                else: h_dict[f'{threshold}-{threshold+5}']=1
+            #if threshold <=h< threshold+2:
+            #    if f'{threshold}-{threshold+}' in h_dict.keys():
+            #        h_dict[f'{threshold}-{threshold+20}']+=1
+            #    else:
+            #        h_dict[f'{threshold}-{threshold+20}']=1
 
+    # print(w_dict)
+    plt.bar(list(h_dict.keys()), h_dict.values(), color='b')
+    plt.savefig('data/h_dict.png')
+
+    #plt.show()
+    '''
     
 if __name__ == "__main__":
     main()

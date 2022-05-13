@@ -16,7 +16,7 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
 
     for i, (img, mml) in enumerate(train_dataloader):
 
-        if i%10==0: print(i)
+        if i%100==0: print(i)
 
         trg = mml.to(device, dtype=torch.int64)
         batch_size = trg.shape[1]
