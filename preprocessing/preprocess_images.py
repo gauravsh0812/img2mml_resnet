@@ -86,7 +86,8 @@ def preprocess_images(images):
         convert = transforms.ToTensor()
         IMAGE = convert(IMAGE)
         
-        save_image(IMAGE, f'data/image_tensors/{image_label}')
+        # save_image(IMAGE, f'data/image_tensors/{image_label.split(".")[0]}.txt')
+        torch.save(IMAGE, f'data/image_tensors/{image_label.split(".")[0]}.txt')
 
         # appending the final image tensor
         # new_img_batch[image_label.split('.')[0]]=IMAGE
