@@ -16,9 +16,9 @@ new_img_batch = []
 def crop_image(image, size):
     return transforms.functional.crop(image, 0, 0, size[0], size[1])
 
-def resize_image(image, mean_size):
-    # return image.resize((int(image.size[0]/2), int(image.size[1]/2)))
-    return image.resize((mean_size[0], mean_size[1]))
+def resize_image(image):
+    return image.resize((int(image.size[0]/2), int(image.size[1]/2)))
+    # return image.resize((mean_size[0], mean_size[1]))
 
 def pad_image(IMAGE):
     right = 8
@@ -27,7 +27,7 @@ def pad_image(IMAGE):
     bottom = 8
     width, height = IMAGE.size
     new_width = width + right + left
-    new_height = height + top + bottom 
+    new_height = height + top + bottom
     result = Image.new(IMAGE.mode, (new_width, new_height))
     result.paste(IMAGE,(left, top))
     return result
@@ -37,15 +37,15 @@ def mean_w_h(img_batch):
     finding the mean width and height of images for this batch
     '''
    # global Ws, Hs
-    
+
     Ws, Hs = [], []
 
     for _i in img_batch:
-        _I = Image.open(os.path.join(f'data/images/{_i}')) 
+        _I = Image.open(os.path.join(f'data/images/{_i}'))
         _w, _h = _I.size
         Ws.append(_w)
         Hs.append(_h)
-    
+
     return Ws, Hs
 
 def preprocess_images(images):
@@ -70,16 +70,13 @@ def preprocess_images(images):
     # new_img_batch = []
     for idx, image_label in enumerate(images):
         # opening the image
-        IMAGE = Image.open(os.path.join('data/images', f'{image_label}.png'))
-
-        # resize
-        IMAGE = resize_image(IMAGE, (math.ceil(mean_w), math.ceil(mean_h)))
+        IMAGE = Image.open(os.path.join('data/images', f'{image_label}'))
 
         # crop the image
-        # IMAGE = crop_image(IMAGE, [max_h+10, max_w+50])
-        # if idx==2:
-        #     plt.imshow(IMAGE)
-        #     plt.show()
+        IMAGE = crop_image(IMAGE, [mean_h, mean_w])
+        
+        # resize
+        IMAGE = resize_image(IMAGE)#, (math.ceil(mean_w), math.ceil(mean_h)))
 
         # padding
         IMAGE = pad_image(IMAGE)
@@ -89,7 +86,7 @@ def preprocess_images(images):
         IMAGE = convert(IMAGE)
 
         # appending the final image tensor
-        new_img_batch.append(IMAGE)
+        # new_img_batch.append(IMAGE)
 
     return (new_img_batch)
 
@@ -102,10 +99,10 @@ def main():
         pool.map(mean_w_h, images)
     '''
     preprocess_images(images)
-    
+
     '''
     # plotting
-    
+
     w_dict, h_dict = {}, {}
     for threshold in range(0, 80, 5):
         for (w,h) in zip(Ws, Hs):
@@ -125,6 +122,6 @@ def main():
 
     #plt.show()
     '''
-    
+
 if __name__ == "__main__":
     main()
