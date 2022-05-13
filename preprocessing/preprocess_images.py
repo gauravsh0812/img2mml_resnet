@@ -67,14 +67,14 @@ def preprocess_images(images):
     # mean_w, mean_h = mean_w_h(img_batch)
     mean_w, mean_h = 500, 50
 
-    # new_img_batch = []
+    new_img_batch = {}
     for idx, image_label in enumerate(images):
         # opening the image
         IMAGE = Image.open(os.path.join('data/images', f'{image_label}'))
 
         # crop the image
         IMAGE = crop_image(IMAGE, [mean_h, mean_w])
-        
+
         # resize
         IMAGE = resize_image(IMAGE)#, (math.ceil(mean_w), math.ceil(mean_h)))
 
@@ -86,21 +86,20 @@ def preprocess_images(images):
         IMAGE = convert(IMAGE)
 
         # appending the final image tensor
-        # new_img_batch.append(IMAGE)
+        new_img_batch[image_label.split('.')[0]]=IMAGE
+
 
     return (new_img_batch)
 
 def main():
 
     images = os.listdir('data/images')
+
     '''
     # finding mean width and height
     with Pool(multiprocessing.cpu_count()-5) as pool:
         pool.map(mean_w_h, images)
-    '''
-    preprocess_images(images)
 
-    '''
     # plotting
 
     w_dict, h_dict = {}, {}
@@ -121,7 +120,12 @@ def main():
     plt.savefig('data/h_dict.png')
 
     #plt.show()
+
     '''
+    new_img_batch = preprocess_images(images)
+    img_df = pd.DataFrame(new_img_batch, columns=['ID','IMG'])
+    img_df.to_csv('data/images_tensor.csv', index=True)
+
 
 if __name__ == "__main__":
     main()
