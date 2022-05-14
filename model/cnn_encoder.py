@@ -103,6 +103,7 @@ class OpenNMTAttention(nn.Module):
         self.relu = nn.ReLU()
         self.softmax = nn.Softmax(dim=1)
         self.sigmoid = nn.Sigmoid()
+        self.net_attn_layer = nn.Linear(341, 340)
         self.enc_1_layer = nn.Linear(encoder_dim, 1)
 
 
@@ -110,7 +111,10 @@ class OpenNMTAttention(nn.Module):
 
         attn1 = self.enclayer(encoder_out)   # [H*W+1, B, attention_dim]
         attn2 = self.hidlayer(hidden)       # [1, B, attn_dim]
-        net_attn = self.relu(attn1 + attn2)   # [H*W+1, B, attn_dim]
+        net_attn = torch.tanh(torch.cat((attn1, attn2), dim=0))   # [H*W+1+1, B, attn_dim] 
+        net_attn = self.net_attn_layer(net_attn.permute(1,2,0)).permute(2,0,1)      # [H*W+1, B, attention_dim]
+        # print('attn1: ', attn1.shape)
+        # print('net_attn: ', net_attn.shape)
         net_attn = self.attnlayer(net_attn)     # [H*W+1, B, 1]
         alpha = self.softmax(net_attn.permute(1,2, 0))  # [B, 1, H*W+1]
         weighted_attn = torch.bmm(alpha, encoder_out.permute(1, 0, 2)).sum(dim=1) # [B,enc_dim]

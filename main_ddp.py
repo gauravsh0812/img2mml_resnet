@@ -122,7 +122,7 @@ def save_checkpoint(epoch, encoder, decoder):
 # parameters
 EPOCHS = 1
 CLIP = 1
-batch_size = 128
+batch_size = 64
 best_valid_loss = float('inf')
 
 '''  FOR DDP

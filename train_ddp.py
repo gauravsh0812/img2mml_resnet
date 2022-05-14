@@ -13,7 +13,7 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
     pred_seqs = open('logs/train_predicted.txt', 'w')
 
     for i, (img, mml) in enumerate(train_dataloader):
-
+        
         trg = mml.to(device, dtype=torch.int64)
         batch_size = trg.shape[1]
 
@@ -50,6 +50,9 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         trg = trg[1:].view(-1)
 
         loss = criterion(output, trg)
+        # print('output size: ', output.shape)
+        # print('trg:  ', trg.shape)
+        # print('loss:  ', loss.shape)
 
         loss.backward()
 
