@@ -88,44 +88,84 @@ class OpenNMTEncoder(nn.Module):
         return final_encoder_output, hidden, cell       # O:[H*W+1, B, Hid]     H:[1, B, hid]
 
 
+# class OpenNMTAttention(nn.Module):
+#     """
+#     Attention
+#     """
+#
+#     def __init__(self, encoder_dim, hid_dim, attention_dim):
+#         super(OpenNMTAttention, self).__init__()
+#
+#         self.enclayer = nn.Linear(encoder_dim, attention_dim)
+#         self.hidlayer = nn.Linear(hid_dim, attention_dim)
+#         self.enc_hidlayer = nn.Linear(hid_dim, encoder_dim)
+#         self.attnlayer = nn.Linear(attention_dim, 1)
+#         self.relu = nn.ReLU()
+#         self.softmax = nn.Softmax(dim=1)
+#         self.sigmoid = nn.Sigmoid()
+#         self.net_attn_layer = nn.Linear(341, 340)
+#         self.enc_1_layer = nn.Linear(encoder_dim, 1)
+#
+#
+#     def forward(self, encoder_out, hidden):
+#
+#         attn1 = self.enclayer(encoder_out)   # [H*W+1, B, attention_dim]
+#         attn2 = self.hidlayer(hidden)       # [1, B, attn_dim]
+#         net_attn = torch.tanh(torch.cat((attn1, attn2), dim=0))   # [H*W+1+1, B, attn_dim]
+#         net_attn = self.net_attn_layer(net_attn.permute(1,2,0)).permute(2,0,1)      # [H*W+1, B, attention_dim]
+#         # print('attn1: ', attn1.shape)
+#         # print('net_attn: ', net_attn.shape)
+#         net_attn = self.attnlayer(net_attn)     # [H*W+1, B, 1]
+#         alpha = self.softmax(net_attn.permute(1,2, 0))  # [B, 1, H*W+1]
+#         weighted_attn = torch.bmm(alpha, encoder_out.permute(1, 0, 2)).sum(dim=1) # [B,enc_dim]
+#         # print('wght_attn:  ', weighted_attn.shape)
+#         gate = self.sigmoid(self.enc_hidlayer(hidden.squeeze(0)))    # [B, enc_dim]
+#         # print('gate:  ', gate.shape)
+#         final_attn_encoding = torch.bmm(gate.unsqueeze(2), weighted_attn.unsqueeze(1))   # [B, enc_dim, enc_dim]
+#         final_attn_encoding = self.enc_1_layer(final_attn_encoding)   # [B, enc_dim, 1]
+#         # print('final_attn_encoding:  ', final_attn_encoding.shape)
+#
+#         return final_attn_encoding.permute(2, 0, 1)    # [1, B, enc_dim]
+
+
 class OpenNMTAttention(nn.Module):
-    """
-    Attention
-    """
+    def __init__(self, enc_hid_dim, dec_hid_dim):
+        super().__init__()
 
-    def __init__(self, encoder_dim, hid_dim, attention_dim):
-        super(OpenNMTAttention, self).__init__()
+        self.attn = nn.Linear(enc_hid_dim + dec_hid_dim, dec_hid_dim)
+        self.v = nn.Linear(dec_hid_dim, 1, bias = False)
 
-        self.enclayer = nn.Linear(encoder_dim, attention_dim)
-        self.hidlayer = nn.Linear(hid_dim, attention_dim)
-        self.enc_hidlayer = nn.Linear(hid_dim, encoder_dim)
-        self.attnlayer = nn.Linear(attention_dim, 1)
-        self.relu = nn.ReLU()
-        self.softmax = nn.Softmax(dim=1)
-        self.sigmoid = nn.Sigmoid()
-        self.net_attn_layer = nn.Linear(341, 340)
-        self.enc_1_layer = nn.Linear(encoder_dim, 1)
+    def forward(self, encoder_outputs, hidden):
 
+        #hidden = [1, batch size, dec hid dim]
+        #encoder_outputs = [src len, batch size, enc dim ]    where src_len = H*W+1
 
-    def forward(self, encoder_out, hidden):
+        batch_size = encoder_outputs.shape[1]
+        src_len = encoder_outputs.shape[0]
 
-        attn1 = self.enclayer(encoder_out)   # [H*W+1, B, attention_dim]
-        attn2 = self.hidlayer(hidden)       # [1, B, attn_dim]
-        net_attn = torch.tanh(torch.cat((attn1, attn2), dim=0))   # [H*W+1+1, B, attn_dim] 
-        net_attn = self.net_attn_layer(net_attn.permute(1,2,0)).permute(2,0,1)      # [H*W+1, B, attention_dim]
-        # print('attn1: ', attn1.shape)
-        # print('net_attn: ', net_attn.shape)
-        net_attn = self.attnlayer(net_attn)     # [H*W+1, B, 1]
-        alpha = self.softmax(net_attn.permute(1,2, 0))  # [B, 1, H*W+1]
-        weighted_attn = torch.bmm(alpha, encoder_out.permute(1, 0, 2)).sum(dim=1) # [B,enc_dim]
-        # print('wght_attn:  ', weighted_attn.shape)
-        gate = self.sigmoid(self.enc_hidlayer(hidden.squeeze(0)))    # [B, enc_dim]
-        # print('gate:  ', gate.shape)
-        final_attn_encoding = torch.bmm(gate.unsqueeze(2), weighted_attn.unsqueeze(1))   # [B, enc_dim, enc_dim]
-        final_attn_encoding = self.enc_1_layer(final_attn_encoding)   # [B, enc_dim, 1]
-        # print('final_attn_encoding:  ', final_attn_encoding.shape)
+        #repeat decoder hidden state src_len times
+        hidden = hidden.repeat(src_len, 1, 1).permute(1, 0, 2)
 
-        return final_attn_encoding.permute(2, 0, 1)    # [1, B, enc_dim]
+        encoder_outputs = encoder_outputs.permute(1, 0, 2)
+
+        #hidden = [batch size, src len, dec hid dim]
+        #encoder_outputs = [batch size, src len, enc dim ]
+
+        energy = torch.tanh(self.attn(torch.cat((hidden, encoder_outputs), dim = 2)))
+
+        #energy = [batch size, src len, dec hid dim]
+
+        attention = self.v(energy).squeeze(2)
+
+        #attention= [batch size, src len]
+
+        a = F.softmax(attention, dim=1).unsqueeze(0)
+
+        #a= [1, batch size, src len]
+
+        weighted = torch.bmm(a.permute(1, 0, 2), encoder_outputs)   # [B, 1, e]
+
+        return weighted.permute(1, 0, 2)
 
 
 class OpenNMTDecoder(nn.Module):
@@ -152,7 +192,8 @@ class OpenNMTDecoder(nn.Module):
         self.output_dim = output_dim
         self.dropout = dropout
 
-        self.attention = OpenNMTAttention(encoder_dim, hid_dim, attention_dim)  # attention network
+        # self.attention = OpenNMTAttention(encoder_dim, hid_dim, attention_dim)  # attention network
+        self.attention = OpenNMTAttention(encoder_dim, hid_dim)  # attention network
 
         self.embedding = nn.Embedding(output_dim, embed_dim)  # embedding layer
         self.dropout = nn.Dropout(p=self.dropout)
