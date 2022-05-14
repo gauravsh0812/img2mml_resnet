@@ -64,11 +64,14 @@ class Attention(nn.Module):
         self.enc_1_layer = nn.Linear(encoder_dim, 1)
 
 
-    def forward(self, encoder_out, hidden):
+    def forward(self, encoder_out, hidden, flag600):
         attn1 = self.enclayer(encoder_out)   # [B, num_pixels, attention_dim]
         attn2 = self.hidlayer(hidden)       # [1, B, attn_dim]
-        # print('attn1: ', attn1.shape)
-        # print('attn2: ', attn2.permute(1,0,2).shape)
+        # if flag600: print('attn1: ', attn1.permute(1,0,2).shape)
+        # if flag600: print('attn2: ', attn2.shape)
+        # print(attn1)
+        # print(attn2)
+        # if flag600: print('addition shape: ', (attn1.permute(1,0,2) + attn2).shape)
         net_attn = self.relu(attn1.permute(1,0,2) + attn2)   # [num, B, attn_dim]
         # print('net attn: ', net_attn.shape)
         #net_attn = self.attnlayer(net_attn).squeeze(2)     # [num, B]
@@ -140,7 +143,7 @@ class Decoder(nn.Module):
             p.requires_grad = fine_tune
 
 
-    def forward(self, dec_src, encoder_out, hidden, cell):
+    def forward(self, dec_src, encoder_out, hidden, cell, flag600):
         # Embedding
         # print('dec_src:  ', dec_src)
         embeddings = self.embedding(dec_src.int().unsqueeze(0))  # (1, batch_size, embed_dim)
@@ -149,11 +152,11 @@ class Decoder(nn.Module):
         # hidden shape = [1, B, hid]
 
         # Calculate attention
-        final_attn_encoding = self.attention(encoder_out, hidden)    # [ 1, B, enc-dim]
+        final_attn_encoding = self.attention(encoder_out, hidden, flag600)    # [ 1, B, enc-dim]
 
         # lstm input
         # print(embeddings.shape)
-        # print(final_attn_encoding.shape)
+        # if flag600: print('final attn encoding shape:  ', final_attn_encoding.shape)
         lstm_input = torch.cat((embeddings, final_attn_encoding), dim=2)
         lstm_input = self.lstm_input_layer(lstm_input)
         lstm_output, (hidden, cell) = self.decode_step(lstm_input, (hidden, cell))
@@ -187,7 +190,7 @@ class Img2Seq(nn.Module):
         c = self.init_c(mean_encoder_out)
         return h.unsqueeze(0), c.unsqueeze(0)
 
-    def forward(self, src, trg,  vocab, write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
+    def forward(self, src, trg,  vocab, write_flag=False, teacher_force_flag=False, flag600=False, teacher_forcing_ratio=0):
 
         batch_size = trg.shape[1]
         trg_len = trg.shape[0]
@@ -199,6 +202,7 @@ class Img2Seq(nn.Module):
 
         # run the encoder --> get flattened FV of images
         encoder_out = self.encoder(src)       # [B, e_i, e_i, encoder_dim or C_out]
+        # if flag600: print('enc_output: ', encoder_out)
         # Flatten image
         encoder_out = encoder_out.view(batch_size, -1, encoder_out.shape[-1])  # (batch_size, num_pixels, encoder_dim)
         num_pixels = encoder_out.size(1)
@@ -216,7 +220,7 @@ class Img2Seq(nn.Module):
 
         for t in range(1, trg_len):
 
-            output, hidden, cell = self.decoder(dec_src, encoder_out, hidden, cell)
+            output, hidden, cell = self.decoder(dec_src, encoder_out, hidden, cell, flag600)
 #            print("ran decoder")
             outputs[t]=output
             top1 = output.argmax(1)     # [batch_size]

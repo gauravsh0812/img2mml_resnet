@@ -13,10 +13,13 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
     trg_seqs = open('logs/train_targets.txt', 'w')
     pred_seqs = open('logs/train_predicted.txt', 'w')
     
-
+    print('len train dataloader: ', len(train_dataloader))
+    flag600=False
     for i, (img, mml) in enumerate(train_dataloader):
 
-        # if i%100==0: print(i)
+        if i>600: 
+            print(f'train_{i}')
+            flag600 = True
 
         trg = mml.to(device, dtype=torch.int64)
         batch_size = trg.shape[1]
@@ -33,7 +36,7 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         # setting gradients to zero
         optimizer.zero_grad()
 
-        output, pred, encoder, decoder = model(src, trg, vocab, True, True, 0.5)
+        output, pred, encoder, decoder = model(src, trg, vocab, True, True, flag600, 0.5)
 
         # translating and storing trg and pred sequences in batches
         if write_file:

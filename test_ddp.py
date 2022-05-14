@@ -11,6 +11,8 @@ def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write
 
     trg_seqs = open('logs/test_targets.txt', 'w')
     pred_seqs = open('logs/test_predicted.txt', 'w')
+    
+    print('testing...')
 
     with torch.no_grad():
 
