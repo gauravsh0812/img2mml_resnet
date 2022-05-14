@@ -127,7 +127,8 @@ def preprocess(device, batch_size):#, rank, world_size):
                                   batch_size=batch_size,
                                   num_workers=0,
                                   shuffle=False,
-                                  collate_fn=mypadcollate)
+                                  collate_fn=mypadcollate, 
+                                  pin_memory=False)
 
     # initailizing class Img2MML_dataset: test dataloader
     imml_test = Img2MML_dataset(test_copy, vocab, tokenizer)
@@ -136,7 +137,7 @@ def preprocess(device, batch_size):#, rank, world_size):
     '''
     test_dataloader = DataLoader(imml_test,
                                  batch_size=batch_size,
-                                 num_workers=4,
+                                 num_workers=0,
                                  shuffle=False,
                                  collate_fn=mypadcollate,
                                  pin_memory=False)
@@ -148,7 +149,7 @@ def preprocess(device, batch_size):#, rank, world_size):
     '''
     val_dataloader = DataLoader(imml_val,
                                 batch_size=batch_size,
-                                num_workers=4,
+                                num_workers=0,
                                 shuffle=False,
                                 collate_fn=mypadcollate,
                                 pin_memory=False)

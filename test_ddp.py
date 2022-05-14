@@ -18,7 +18,7 @@ def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write
 
         for i, (img, mml) in enumerate(test_dataloader):
 
-            if i%50==0: print(f'test_{i}')
+            # if i%50==0: print(f'test_{i}')
             # initailize the hidden state
             trg = mml.to(device, dtype=torch.int64)
             # print('@test trg shape:  ', trg.shape)
@@ -27,7 +27,7 @@ def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write
             # loading image Tensors
             srcTensor = []
             for _i in img:
-                srcTensor.append(torch.load(f'data/image_tensors/{_i}.txt'))
+                srcTensor.append(torch.load(f'data/image_tensors/{int(_i)}.txt'))
             src = torch.stack(srcTensor).to(device)
 
 
