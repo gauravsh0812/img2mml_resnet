@@ -17,6 +17,7 @@ from train_ddp import train
 from test_ddp import evaluate
 from preprocessing.preprocess_dataloader import preprocess
 from model.model import Encoder, Decoder, Img2Seq
+from model.cnn_encoder import OpenNMTEncoder, OpenNMTDecoder, OpenNMTImg2Seq
 
 # import torcheck  # can be used to check if the model is working fine or not. Also,
 # can be used to check if any of the parameter or weight is dying or exploding.
@@ -50,14 +51,19 @@ def define_model(vocab, DEVICE):#, TRG_PAD_IDX, OUTPUT_DIM):
     ENC_DIM = 512
     ATTN_DIM = 512
     DEC_EMB_DIM = 256
-    HID_DIM = 500
+    HID_DIM = 512
     N_LAYERS = 1
     DROPOUT = 0.5
 
     print('building model...')
-    ENC = Encoder()
-    DEC = Decoder(DEC_EMB_DIM, ENC_DIM,  HID_DIM, ATTN_DIM, OUTPUT_DIM, N_LAYERS, DROPOUT)
-    model = Img2Seq(ENC, DEC, DEVICE, ENC_DIM, HID_DIM)
+    # ENC = Encoder()
+    # DEC = Decoder(DEC_EMB_DIM, ENC_DIM,  HID_DIM, ATTN_DIM, OUTPUT_DIM, N_LAYERS, DROPOUT)
+    # model = Img2Seq(ENC, DEC, DEVICE, ENC_DIM, HID_DIM)
+
+    ENC = OpenNMTEncoder(INPUT_CHANNEL, HID_DIM, N_LAYERS, DROPOUT, DEVICE)
+    DEC = OpenNMTDecoder(DEC_EMB_DIM, ENC_DIM,  HID_DIM, ATTN_DIM, OUTPUT_DIM, N_LAYERS, DROPOUT)
+    model = OpenNMTImg2Seq(ENC, DEC, DEVICE, ENC_DIM, HID_DIM)
+
 
     return model
 

@@ -5,10 +5,10 @@ import torchtext
 import random
 import torchvision
 
-class Encoder(nn.Module):
+class OpenNMTEncoder(nn.Module):
 
     def __init__(self, input_channel, hid_dim, n_layers, dropout, device):
-        super(Encoder, self).__init__()
+        super(OpenNMTEncoder, self).__init__()
 
         self.n_layers = n_layers
         self.device = device
@@ -25,17 +25,15 @@ class Encoder(nn.Module):
         self.batch_norm3 = nn.BatchNorm2d(512)
         self.maxpool = nn.MaxPool2d(kernel_size=(2,2), stride=(2,2))
         self.maxpool1 = nn.MaxPool2d(kernel_size=(1, 2), stride=(1, 2))
-        self.emb = nn.Embedding(256, 256)
-        self.lstm = nn.LSTM(256, hid_dim, num_layers=1, dropout=0.3, bidirectional=True, batch_first=False)
+        self.emb = nn.Embedding(256, 512)
+        # self.final_enc_layer = nn.Linear(1000, 512)
+        self.lstm = nn.LSTM(512, hid_dim, num_layers=1, dropout=0.3, bidirectional=False, batch_first=False)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, src):
         # img = [batch, Cin, W, H]
         batch = src.shape[0]
         C_in = src.shape[1]
-
-        # Initialize LSTM state
-        hidden, cell = self.init_hidden_state(encoder_out)  # (batch_size, hid_dim)
 
         # src = [batch, Cin, w, h]
         # layer 1
@@ -71,27 +69,32 @@ class Encoder(nn.Module):
 
             all_outputs.append(lstm_output.unsqueeze(0))
 
-        final_encoder_output = torch.cat(all_outputs, dim =0)  #[H, W+1, BATCH, hid_dimx2]
+        final_encoder_output = torch.cat(all_outputs, dim =0)  #[H, W+1, BATCH, hid_dim]
         # modifying it to [H*W+1, batch, hid_dimx2]
         final_encoder_output = final_encoder_output.view(
                                             final_encoder_output.shape[0]*final_encoder_output.shape[1],
                                             final_encoder_output.shape[2], final_encoder_output.shape[3])
+        # final_encoder_output = self.final_enc_layer(final_encoder_output)   # [H*W+1, B, 512]
 
-        for idx, LAYER in enumerate([hidden, cell]):
-           fwd_layer, bwd_layer = torch.tanh(LAYER[0,:,:]), torch.tanh(LAYER[1,:,:])  # [batch, hid]
-           if idx==0: hidden = LAYER.unsqueeze(0)     # [1, B, Hid]
-           else: cell = LAYER.unsqueeze(0)
+        # print('hidden: ', hidden.shape)
+        # for idx, LAYER in enumerate([hidden, cell]):
+        #    fwd_layer, bwd_layer = LAYER[0,:,:], LAYER[1,:,:]  # [batch, hid]
+        #
+        #
+        #    if idx==0: hidden = LAYER.unsqueeze(0)     # [1, B, Hid]
+        #    else: cell = LAYER.unsqueeze(0)
+        #
+        # print('hidden: ', hidden.shape)
+        return final_encoder_output, hidden, cell       # O:[H*W+1, B, Hid]     H:[1, B, hid]
 
-        return final_encoder_output, hidden, cell
 
-
-class Attention(nn.Module):
+class OpenNMTAttention(nn.Module):
     """
     Attention
     """
 
     def __init__(self, encoder_dim, hid_dim, attention_dim):
-        super(Attention, self).__init__()
+        super(OpenNMTAttention, self).__init__()
 
         self.enclayer = nn.Linear(encoder_dim, attention_dim)
         self.hidlayer = nn.Linear(hid_dim, attention_dim)
@@ -104,15 +107,13 @@ class Attention(nn.Module):
 
 
     def forward(self, encoder_out, hidden):
+
         attn1 = self.enclayer(encoder_out)   # [H*W+1, B, attention_dim]
         attn2 = self.hidlayer(hidden)       # [1, B, attn_dim]
-        # print('attn1: ', attn1.shape)
-        # print('attn2: ', attn2.permute(1,0,2).shape)
-        net_attn = self.relu(attn1.permute(1,0,2) + attn2)   # [H*W+1, B, attn_dim]
+        net_attn = self.relu(attn1 + attn2)   # [H*W+1, B, attn_dim]
         net_attn = self.attnlayer(net_attn)     # [H*W+1, B, 1]
         alpha = self.softmax(net_attn.permute(1,2, 0))  # [B, 1, H*W+1]
-        # print('alpha:  ', alpha.shape)
-        weighted_attn = torch.bmm(alpha, encoder_out).sum(dim=1) # [B,enc_dim] #(encoder_out * alpha.unsqueeze(2)).sum(dim=1)   # [B, encoder_dim]
+        weighted_attn = torch.bmm(alpha, encoder_out.permute(1, 0, 2)).sum(dim=1) # [B,enc_dim]
         # print('wght_attn:  ', weighted_attn.shape)
         gate = self.sigmoid(self.enc_hidlayer(hidden.squeeze(0)))    # [B, enc_dim]
         # print('gate:  ', gate.shape)
@@ -123,7 +124,7 @@ class Attention(nn.Module):
         return final_attn_encoding.permute(2, 0, 1)    # [1, B, enc_dim]
 
 
-class Decoder(nn.Module):
+class OpenNMTDecoder(nn.Module):
     """
     Decoder.
     """
@@ -137,7 +138,7 @@ class Decoder(nn.Module):
         :param encoder_dim: feature size of encoded images
         :param dropout: dropout
         """
-        super(Decoder, self).__init__()
+        super(OpenNMTDecoder, self).__init__()
 
         self.encoder_dim = encoder_dim
         self.attention_dim = attention_dim
@@ -147,7 +148,7 @@ class Decoder(nn.Module):
         self.output_dim = output_dim
         self.dropout = dropout
 
-        self.attention = OpennmtAttention(encoder_dim, hid_dim, attention_dim)  # attention network
+        self.attention = OpenNMTAttention(encoder_dim, hid_dim, attention_dim)  # attention network
 
         self.embedding = nn.Embedding(output_dim, embed_dim)  # embedding layer
         self.dropout = nn.Dropout(p=self.dropout)
@@ -197,30 +198,16 @@ class Decoder(nn.Module):
         return predictions.squeeze(0), hidden, cell
 
 
-class Img2Seq(nn.Module):
+class OpenNMTImg2Seq(nn.Module):
     """
     Calling class
     """
     def __init__(self, encoder, decoder, device, encoder_dim, hid_dim):
-        super(Img2Seq, self).__init__()
+        super(OpenNMTImg2Seq, self).__init__()
 
         self.encoder = encoder
         self.decoder = decoder
         self.device = device
-        self.init_h = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial hidden state of LSTMCell
-        self.init_c = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial cell state of LSTMCell
-
-    def init_hidden_state(self, encoder_out):
-        """
-        Creates the initial hidden and cell states for the decoder's LSTM based on the encoded images.
-        :param encoder_out: encoded images, a tensor of dimension (batch_size, num_pixels, encoder_dim)
-        :return: hidden state, cell state
-        """
-        mean_encoder_out = encoder_out.mean(dim=1)
-        # print('encoder_out:  ', encoder_out.shape)
-        h = self.init_h(mean_encoder_out)  # (batch_size, hid_dim)
-        c = self.init_c(mean_encoder_out)
-        return h.unsqueeze(0), c.unsqueeze(0)
 
     def forward(self, src, trg,  vocab, write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
 
@@ -233,7 +220,7 @@ class Img2Seq(nn.Module):
         # for each token, [batch, output_dim]
 
         # run the encoder --> get flattened FV of images
-        encoder_out, hidden, cell = self.encoder(src)       # enc_output: [HxW+1, B. H*2]   Hid/cell: [1, B, Hid]
+        encoder_out, hidden, cell = self.encoder(src)       # enc_output: [HxW+1, B, H*2]   Hid/cell: [1, B, Hid]
 
         dec_src = trg[0,:]   # [1, B]
 
@@ -244,7 +231,7 @@ class Img2Seq(nn.Module):
 
         for t in range(1, trg_len):
 
-            output, (hidden, cell) = self.decoder(dec_src, encoder_out, hidden, cell)     # O: [B, out]   H: [1, B, Hid]
+            output, hidden, cell = self.decoder(dec_src, encoder_out, hidden, cell)     # O: [B, out]   H: [1, B, Hid]
             outputs[t]=output
             top1 = output.argmax(1)     # [batch_size]
 
