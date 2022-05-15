@@ -77,9 +77,10 @@ def init_weights(m):
 def setup(rank, world_size):
     os.environ["PL_TORCH_DISTRIBUTED_BACKEND"] = "gloo"
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12345'
+    os.environ['MASTER_PORT'] = '1234'
 
     # export GLOO_SOCKET_IFNAME=en0
+    print('setting up environ...')
 
     # initialize the process group
     dist.init_process_group("gloo", init_method='env://', rank=rank, world_size=world_size)
