@@ -55,14 +55,10 @@ class My_pad_collate(object):
         padded_mml_tensor = pad_sequence(_mml, padding_value=0)
         _img = [int(i) for i in _img]
 
-        # preprocessing images for this batch
-        #new_img_batch = preprocess_images(_img)
-        #new_img_batch = torch.stack(new_img_batch)
         return torch.Tensor(_img).to(self.device), padded_mml_tensor.to(self.device)
-        #return new_img_batch.to(self.device), padded_mml_tensor.to(self.device)
 
 
-def preprocess(device, batch_size):#, rank, world_size):
+def preprocess(device, batch_size, rank, world_size):
 
     print('preprocessing data...')
 
@@ -114,42 +110,56 @@ def preprocess(device, batch_size):#, rank, world_size):
     imml_train = Img2MML_dataset(train_copy,
                                  vocab,
                                  tokenizer)
-    '''    FOR DDP
+    '''    FOR DDP '''
     # Create distributed sampler pinned to rank
     train_sampler = DistributedSampler(imml_train,
                                  num_replicas=world_size,
                                  rank=rank,
                                  shuffle=True,  # May be True
                                  seed=42)
-    '''
+
     # creating dataloader
-    train_dataloader = DataLoader(imml_train,
+    train_dataloader = DataLoader(train_sampler,
                                   batch_size=batch_size,
-                                  num_workers=0,
+                                  num_workers=4,
                                   shuffle=False,
-                                  collate_fn=mypadcollate, 
+                                  collate_fn=mypadcollate,
                                   pin_memory=False)
 
     # initailizing class Img2MML_dataset: test dataloader
-    imml_test = Img2MML_dataset(test_copy, vocab, tokenizer)
-    ''' FOR DDP
-    test_sampler = DistributedSampler(imml_test, num_replicas=world_size, rank=rank, shuffle=True, seed=42)
-    '''
-    test_dataloader = DataLoader(imml_test,
+    imml_test = Img2MML_dataset(test_copy,
+                                vocab,
+                                tokenizer)
+
+    ''' FOR DDP '''
+    test_sampler = DistributedSampler(imml_test,
+                                      num_replicas=world_size,
+                                      rank=rank,
+                                      shuffle=True,
+                                      seed=42)
+
+    test_dataloader = DataLoader(test_sampler,
                                  batch_size=batch_size,
-                                 num_workers=0,
+                                 num_workers=4,
                                  shuffle=False,
                                  collate_fn=mypadcollate,
                                  pin_memory=False)
 
     # initailizing class Img2MML_dataset: val dataloader
-    imml_val = Img2MML_dataset(val_copy, vocab, tokenizer)
-    ''' FOR DDP
-    val_sampler = DistributedSampler(imml_train, num_replicas=world_size, rank=rank, shuffle=True, seed=42)
-    '''
+    imml_val = Img2MML_dataset(val_copy,
+                               vocab,
+                               tokenizer)
+
+    ''' FOR DDP '''
+    val_sampler = DistributedSampler(imml_val,
+                                    num_replicas=world_size,
+                                    rank=rank,
+                                    shuffle=True,
+                                    seed=42)
+
     val_dataloader = DataLoader(imml_val,
                                 batch_size=batch_size,
-                                num_workers=0,
+                                num_workers=4,
                                 shuffle=False,
                                 collate_fn=mypadcollate,
                                 pin_memory=False)

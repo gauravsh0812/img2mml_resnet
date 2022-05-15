@@ -24,17 +24,12 @@ from model.cnn_encoder import OpenNMTEncoder, OpenNMTDecoder, OpenNMTImg2Seq
 
 # argument
 parser = argparse.ArgumentParser()
-''' FOR DDP
-parser.add_argument( '--rank', type=int, metavar='', required=True,
-                            help='which gpu core want to use?')
-'''
+''' FOR DDP '''
 parser.add_argument( '--gpu_num', type=int, metavar='', required=True,
                             help='which gpu core want to use?')
 args = parser.parse_args()
-''' FOR DDP
-rank = args.rank
-'''
-rank = args.gpu_num
+
+rank = args.gpu_num           # sequential id of GPU
 
 # os.environ["CUDA_VISIBLE_DEVICES"]="1"
 # os.environ['CUDA_LAUNCH_BLOCKING']="1"
@@ -125,31 +120,29 @@ CLIP = 1
 batch_size = 16
 best_valid_loss = float('inf')
 
-'''  FOR DDP
+'''  FOR DDP '''
 # parameters needed for DDP:
 world_size = torch.cuda.device_count()  # total number of GPUs
-rank = rank                               # sequential id of GPU
 
 print(f'DDP_Model running on rank: {rank}...')
 setup(rank, world_size)
-'''
+
 
 # device = torch.device(f'cuda:{rank}' if torch.cuda.is_available() else 'cpu')
 device = torch.device('cuda'if torch.cuda.is_available() else 'cpu')
-torch.cuda.set_device(1)
-assert torch.cuda.current_device() == 1
-# print(torch.cuda.is_available())
+torch.cuda.set_device(rank)
+assert torch.cuda.current_device() == rank
 
 
-''' FOR DDP
+''' FOR DDP '''
 train_dataloader, test_dataloader, val_dataloade, vocab = preprocess(device, batch_size, rank, world_size)
-'''
-train_dataloader, test_dataloader, val_dataloader, vocab = preprocess(device, batch_size)
+# train_dataloader, test_dataloader, val_dataloader, vocab = preprocess(device, batch_size)
+
 TRG_PAD_IDX = 0     # can be obtained from vocab in preprocessing <pad>:0, <unk>:1, <sos>:2, <eos>:3
 model = define_model(vocab, device)
 model.to(device)
 
-''' FOR DDP
+''' FOR DDP '''
 # Wrap the model in DDP wrapper
 ddp_model = DDP(model, device_ids=[rank], output_device=rank)
 
@@ -157,7 +150,7 @@ print('MODEL: ')
 print(ddp_model.apply(init_weights))
 print(f'The model has {count_parameters(ddp_model):,} trainable parameters')
 
-'''
+
 
 # print('MODEL: ')
 # print(model.apply(init_weights))
@@ -185,20 +178,19 @@ for epoch in range(EPOCHS):
     start_time = time.time()
 
     # train_dataloader.sampler.set_epoch(epoch)
-    ''' FOR DDP
+    ''' FOR DDP '''
     train_loss = mp.spawn(train, args= (ddp_model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False), nprocs=world_size, join=True)
-    train_loss = train(ddp_model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
-    val_loss = evaluate(ddp_model, batch_size, val_dataloader, criterion, device, True)
-    '''
-    train_loss, encoder, decoder = train(model, vocab, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
-    val_loss, encoder, decoder = evaluate(model, vocab, batch_size, val_dataloader, criterion, device, True)
+    val_loss = mp.spawn(evaluate, args=(ddp_model, batch_size, val_dataloader, criterion, device, True), nprocs=world_size, join=True)
+
+    # train_loss, encoder, decoder = train(model, vocab, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
+    # val_loss, encoder, decoder = evaluate(model, vocab, batch_size, val_dataloader, criterion, device, True)
     end_time=time.time()
     epoch_mins, epoch_secs = epoch_time(start_time, end_time)
 
     if val_loss < best_valid_loss:
         best_valid_loss = val_loss
-        #if rank == 0:
-        torch.save(model.state_dict(), f'trained_models/opennmt-version1-model.pt')
+        if rank == 0:
+            torch.save(model.state_dict(), f'trained_models/opennmt-version1-model.pt')
         # save_checkpoint(epoch, encoder, decoder)
 
     # logging
@@ -210,22 +202,19 @@ for epoch in range(EPOCHS):
     loss_file.write(f'\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}\n')
     loss_file.write(f'\t Val. Loss: {val_loss:.3f} |  Val. PPL: {math.exp(val_loss):7.3f}\n')
 
-    ''' FOR DDP
+    ''' FOR DDP     '''
     cleanup()
-    '''
+
 
 print('final model saved at:  ', f'trained_models/opennmt-version1-model.pt')
 
 # testing
-''' FOR DDP
+''' FOR DDP '''
 ddp_model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))
-test_loss = evaluate(ddp_model, batch_size, test_dataloader, criterion, device, True)
-'''
-# model = torchvision.models.resnet18(pretrained=True)
+test_loss = mp.spawn(evaluate, args=(ddp_model, batch_size, test_dataloader, criterion, device, True), nprocs=world_size, join=True)
 
-# model.load_state_dict(checkpoint['state_dict'], strict=False)
-model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))#, strict=False)
-test_loss, encoder, decoder = evaluate(model, vocab, batch_size, test_dataloader, criterion, device, True)
+# model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))#, strict=False)
+# test_loss, encoder, decoder = evaluate(model, vocab, batch_size, test_dataloader, criterion, device, True)
 
 print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
 loss_file.write(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')

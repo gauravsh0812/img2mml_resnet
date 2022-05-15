@@ -7,11 +7,13 @@ def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write
 
     model.eval()
 
+    train_dataloader.sampler.set_epoch(i)  
+
     epoch_loss = 0
 
     trg_seqs = open('logs/test_targets.txt', 'w')
     pred_seqs = open('logs/test_predicted.txt', 'w')
-    
+
     print('testing...')
 
     with torch.no_grad():

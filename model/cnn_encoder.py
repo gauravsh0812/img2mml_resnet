@@ -74,17 +74,7 @@ class OpenNMTEncoder(nn.Module):
         final_encoder_output = final_encoder_output.view(
                                             final_encoder_output.shape[0]*final_encoder_output.shape[1],
                                             final_encoder_output.shape[2], final_encoder_output.shape[3])
-        # final_encoder_output = self.final_enc_layer(final_encoder_output)   # [H*W+1, B, 512]
-
-        # print('hidden: ', hidden.shape)
-        # for idx, LAYER in enumerate([hidden, cell]):
-        #    fwd_layer, bwd_layer = LAYER[0,:,:], LAYER[1,:,:]  # [batch, hid]
-        #
-        #
-        #    if idx==0: hidden = LAYER.unsqueeze(0)     # [1, B, Hid]
-        #    else: cell = LAYER.unsqueeze(0)
-        #
-        # print('hidden: ', hidden.shape)
+        
         return final_encoder_output, hidden, cell       # O:[H*W+1, B, Hid]     H:[1, B, hid]
 
 
@@ -142,27 +132,11 @@ class OpenNMTAttention(nn.Module):
 
         batch_size = encoder_outputs.shape[1]
         src_len = encoder_outputs.shape[0]
-
-        #repeat decoder hidden state src_len times
         hidden = hidden.repeat(src_len, 1, 1).permute(1, 0, 2)
-
-        encoder_outputs = encoder_outputs.permute(1, 0, 2)
-
-        #hidden = [batch size, src len, dec hid dim]
-        #encoder_outputs = [batch size, src len, enc dim ]
-
-        energy = torch.tanh(self.attn(torch.cat((hidden, encoder_outputs), dim = 2)))
-
-        #energy = [batch size, src len, dec hid dim]
-
-        attention = self.v(energy).squeeze(2)
-
-        #attention= [batch size, src len]
-
-        a = F.softmax(attention, dim=1).unsqueeze(0)
-
-        #a= [1, batch size, src len]
-
+        encoder_outputs = encoder_outputs.permute(1, 0, 2)      # Hid: [batch size, src len, dec hid dim]   out: [batch size, src len, enc dim ]
+        energy = torch.tanh(self.attn(torch.cat((hidden, encoder_outputs), dim = 2)))   #[batch size, src len, dec hid dim]
+        attention = self.v(energy).squeeze(2)       # [batch size, src len]
+        a = F.softmax(attention, dim=1).unsqueeze(0)        #[1, batch size, src len]
         weighted = torch.bmm(a.permute(1, 0, 2), encoder_outputs)   # [B, 1, e]
 
         return weighted.permute(1, 0, 2)
@@ -199,8 +173,6 @@ class OpenNMTDecoder(nn.Module):
         self.dropout = nn.Dropout(p=self.dropout)
         self.lstm_input_layer = nn.Linear(embed_dim + encoder_dim, embed_dim)
         self.decode_step = nn.LSTM(embed_dim, hid_dim, num_layers=n_layers, dropout=dropout, bias=True)  # decoding LSTMCell
-        # self.init_h = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial hidden state of LSTMCell
-        # self.init_c = nn.Linear(encoder_dim, hid_dim)  # linear layer to find initial cell state of LSTMCell
         self.fc = nn.Linear(hid_dim, output_dim)  # linear layer to find scores over vocabulary
         self.init_weights()  # initialize some layers with the uniform distribution
 
@@ -223,18 +195,12 @@ class OpenNMTDecoder(nn.Module):
 
     def forward(self, dec_src, encoder_out, hidden, cell):
         # Embedding
-        # print('dec_src:  ', dec_src)
         embeddings = self.embedding(dec_src.int().unsqueeze(0))  # (1, batch_size, embed_dim)
-        # print('dec emb shape: ', embeddings.shape)
-        # print('h shape:  ', hidden.shape)
-        # hidden shape = [1, B, hid]
 
         # Calculate attention
         final_attn_encoding = self.attention(encoder_out, hidden)    # [ 1, B, enc-dim]
 
         # lstm input
-        # print(embeddings.shape)
-        # print(final_attn_encoding.shape)
         lstm_input = torch.cat((embeddings, final_attn_encoding), dim=2)    # [1, B, enc+embed]
         lstm_input = self.lstm_input_layer(lstm_input)                      # [1, B, embed]
         lstm_output, (hidden, cell) = self.decode_step(lstm_input, (hidden, cell))    # H: [1, B, hid]     O: [1, B, Hid*2]

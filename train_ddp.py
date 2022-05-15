@@ -7,13 +7,15 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
 
     model.train()  # train mode is ON i.e. dropout and normalization tech. will be used
 
+    train_dataloader.sampler.set_epoch(i)
+    
     epoch_loss = 0
 
     trg_seqs = open('logs/train_targets.txt', 'w')
     pred_seqs = open('logs/train_predicted.txt', 'w')
 
     for i, (img, mml) in enumerate(train_dataloader):
-        
+
         trg = mml.to(device, dtype=torch.int64)
         batch_size = trg.shape[1]
 
