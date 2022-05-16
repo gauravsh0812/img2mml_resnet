@@ -27,6 +27,12 @@ parser = argparse.ArgumentParser()
 ''' FOR DDP '''
 parser.add_argument( '--gpu_num', type=int, metavar='', required=True,
                             help='which gpu core want to use?')
+parser.add_argument("--ddp", default=False, action="store_true",
+                    help="should run in DDP mode or single GPU")
+parser.add_argument( '--batch_size', type=int, metavar='', required=True,
+                            help='Batch size')
+parser.add_argument( '--epochs', type=int, metavar='', required=True,
+                            help='number of epochs')
 args = parser.parse_args()
 
 rank = args.gpu_num           # sequential id of GPU
@@ -116,51 +122,42 @@ def save_checkpoint(epoch, encoder, decoder):
     torch.save(state, 'trained_models/opennmt-version1-model.pt')
 
 # parameters
-EPOCHS = 1
+EPOCHS = args.epochs
 CLIP = 1
-batch_size = 16
+batch_size = args.batch_size
 best_valid_loss = float('inf')
 
 '''  FOR DDP '''
-# parameters needed for DDP:
-world_size = torch.cuda.device_count()  # total number of GPUs
+if args.ddp:
+    # parameters needed for DDP:
+    world_size = torch.cuda.device_count()  # total number of GPUs
 
-print(f'DDP_Model running on rank: {rank}...')
-setup(rank, world_size)
+    print(f'DDP_Model running on rank: {rank}...')
+    setup(rank, world_size)
 
-
-# device = torch.device(f'cuda:{rank}' if torch.cuda.is_available() else 'cpu')
 device = torch.device('cuda'if torch.cuda.is_available() else 'cpu')
 torch.cuda.set_device(rank)
 assert torch.cuda.current_device() == rank
 
 
 ''' FOR DDP '''
-train_dataloader, test_dataloader, val_dataloade, vocab = preprocess(device, batch_size, rank, world_size)
-# train_dataloader, test_dataloader, val_dataloader, vocab = preprocess(device, batch_size)
+if args.ddp:
+    train_dataloader, test_dataloader, val_dataloade, vocab = preprocess(device, batch_size, [rank, world_size])
+else:
+    train_dataloader, test_dataloader, val_dataloader, vocab = preprocess(device, batch_size, [])
 
 TRG_PAD_IDX = 0     # can be obtained from vocab in preprocessing <pad>:0, <unk>:1, <sos>:2, <eos>:3
 model = define_model(vocab, device)
 model.to(device)
 
 ''' FOR DDP '''
-# Wrap the model in DDP wrapper
-ddp_model = DDP(model, device_ids=[rank], output_device=rank)
+if args.ddp:
+    # Wrap the model in DDP wrapper
+    ddp_model = DDP(model, device_ids=[rank], output_device=rank)
 
 print('MODEL: ')
 print(ddp_model.apply(init_weights))
 print(f'The model has {count_parameters(ddp_model):,} trainable parameters')
-
-
-
-# print('MODEL: ')
-# print(model.apply(init_weights))
-# print(f'The model has {count_parameters(model):,} trainable parameters')
-#
-# print('output dim:  ', len(vocab))
-
-# print('cuda available:  ', torch.cuda.is_available())
-# print('current device:  ', torch.cuda.current_device())
 
 # optimizer and loss
 optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -180,11 +177,13 @@ for epoch in range(EPOCHS):
 
     # train_dataloader.sampler.set_epoch(epoch)
     ''' FOR DDP '''
-    train_loss = mp.spawn(train, args= (ddp_model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False), nprocs=world_size, join=True)
-    val_loss = mp.spawn(evaluate, args=(ddp_model, batch_size, val_dataloader, criterion, device, True), nprocs=world_size, join=True)
+    if args.ddp:
+        train_loss = mp.spawn(train, args= (ddp_model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False), nprocs=world_size, join=True)
+        val_loss = mp.spawn(evaluate, args=(ddp_model, batch_size, val_dataloader, criterion, device, True), nprocs=world_size, join=True)
+    else:
+        train_loss, encoder, decoder = train(model, vocab, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
+        val_loss, encoder, decoder = evaluate(model, vocab, batch_size, val_dataloader, criterion, device, True)
 
-    # train_loss, encoder, decoder = train(model, vocab, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
-    # val_loss, encoder, decoder = evaluate(model, vocab, batch_size, val_dataloader, criterion, device, True)
     end_time=time.time()
     epoch_mins, epoch_secs = epoch_time(start_time, end_time)
 
@@ -204,18 +203,20 @@ for epoch in range(EPOCHS):
     loss_file.write(f'\t Val. Loss: {val_loss:.3f} |  Val. PPL: {math.exp(val_loss):7.3f}\n')
 
     ''' FOR DDP     '''
-    cleanup()
+    if args.ddp:
+        cleanup()
 
 
 print('final model saved at:  ', f'trained_models/opennmt-version1-model.pt')
 
 # testing
-''' FOR DDP '''
 ddp_model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))
-test_loss = mp.spawn(evaluate, args=(ddp_model, batch_size, test_dataloader, criterion, device, True), nprocs=world_size, join=True)
 
-# model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))#, strict=False)
-# test_loss, encoder, decoder = evaluate(model, vocab, batch_size, test_dataloader, criterion, device, True)
+''' FOR DDP '''
+if args.ddp:
+    test_loss = mp.spawn(evaluate, args=(ddp_model, batch_size, test_dataloader, criterion, device, True), nprocs=world_size, join=True)
+else:
+    test_loss, encoder, decoder = evaluate(model, vocab, batch_size, test_dataloader, criterion, device, True)
 
 print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
 loss_file.write(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')

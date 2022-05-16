@@ -58,9 +58,15 @@ class My_pad_collate(object):
         return torch.Tensor(_img).to(self.device), padded_mml_tensor.to(self.device)
 
 
-def preprocess(device, batch_size, rank, world_size):
+def preprocess(device, batch_size, args_arr):
 
     print('preprocessing data...')
+
+    if len(args_arr) == 2:
+        args_arr = rank, world_size
+        ddp = True
+    else:
+        ddp = False
 
     # reading raw text files
     mml_txt = open('data/mml.txt').read().split('\n')[:-1]
@@ -111,15 +117,19 @@ def preprocess(device, batch_size, rank, world_size):
                                  vocab,
                                  tokenizer)
     '''    FOR DDP '''
-    # Create distributed sampler pinned to rank
-    train_sampler = DistributedSampler(imml_train,
-                                 num_replicas=world_size,
-                                 rank=rank,
-                                 shuffle=True,  # May be True
-                                 seed=42)
+    if ddp:
+        # Create distributed sampler pinned to rank
+        train_sampler = DistributedSampler(imml_train,
+                                     num_replicas=world_size,
+                                     rank=rank,
+                                     shuffle=True,  # May be True
+                                     seed=42)
+        train_dataset = train_sampler
+    else:
+        train_dataset = imml_train
 
     # creating dataloader
-    train_dataloader = DataLoader(train_sampler,
+    train_dataloader = DataLoader(train_dataset,
                                   batch_size=batch_size,
                                   num_workers=4,
                                   shuffle=False,
@@ -132,13 +142,17 @@ def preprocess(device, batch_size, rank, world_size):
                                 tokenizer)
 
     ''' FOR DDP '''
-    test_sampler = DistributedSampler(imml_test,
-                                      num_replicas=world_size,
-                                      rank=rank,
-                                      shuffle=True,
-                                      seed=42)
+    if ddp:
+        test_sampler = DistributedSampler(imml_test,
+                                          num_replicas=world_size,
+                                          rank=rank,
+                                          shuffle=True,
+                                          seed=42)
+        test_dataset = test_sampler
+    else:
+        test_dataset = imml_test
 
-    test_dataloader = DataLoader(test_sampler,
+    test_dataloader = DataLoader(test_dataset,
                                  batch_size=batch_size,
                                  num_workers=4,
                                  shuffle=False,
@@ -151,13 +165,17 @@ def preprocess(device, batch_size, rank, world_size):
                                tokenizer)
 
     ''' FOR DDP '''
-    val_sampler = DistributedSampler(imml_val,
-                                    num_replicas=world_size,
-                                    rank=rank,
-                                    shuffle=True,
-                                    seed=42)
+    if ddp:
+        val_sampler = DistributedSampler(imml_val,
+                                        num_replicas=world_size,
+                                        rank=rank,
+                                        shuffle=True,
+                                        seed=42)
+        val_dataset = val_sampler
+    else:
+        val_dataset = imml_val
 
-    val_dataloader = DataLoader(imml_val,
+    val_dataloader = DataLoader(val_dataset,
                                 batch_size=batch_size,
                                 num_workers=4,
                                 shuffle=False,
