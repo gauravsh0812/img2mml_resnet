@@ -67,7 +67,8 @@ def preprocess(device, batch_size, args_arr):
         ddp = True
     else:
         ddp = False
-
+    
+    print('ddp: ', ddp)
     # reading raw text files
     mml_txt = open('data/mml.txt').read().split('\n')[:-1]
     image_num = range(0,len(mml_txt))
@@ -131,8 +132,8 @@ def preprocess(device, batch_size, args_arr):
     # creating dataloader
     train_dataloader = DataLoader(train_dataset,
                                   batch_size=batch_size,
-                                  num_workers=4,
-                                  shuffle=False,
+                                  num_workers=0,
+                                  shuffle=True,
                                   collate_fn=mypadcollate,
                                   pin_memory=False)
 
@@ -154,8 +155,8 @@ def preprocess(device, batch_size, args_arr):
 
     test_dataloader = DataLoader(test_dataset,
                                  batch_size=batch_size,
-                                 num_workers=4,
-                                 shuffle=False,
+                                 num_workers=0,
+                                 shuffle=True,
                                  collate_fn=mypadcollate,
                                  pin_memory=False)
 
@@ -177,8 +178,8 @@ def preprocess(device, batch_size, args_arr):
 
     val_dataloader = DataLoader(val_dataset,
                                 batch_size=batch_size,
-                                num_workers=4,
-                                shuffle=False,
+                                num_workers=0,
+                                shuffle=True,
                                 collate_fn=mypadcollate,
                                 pin_memory=False)
 

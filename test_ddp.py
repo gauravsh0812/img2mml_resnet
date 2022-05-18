@@ -7,7 +7,7 @@ def evaluate(model, vocab, batch_size, test_dataloader, criterion, device, write
 
     model.eval()
 
-    train_dataloader.sampler.set_epoch(i)  
+    # test_dataloader.sampler.set_epoch(i)  
 
     epoch_loss = 0
 

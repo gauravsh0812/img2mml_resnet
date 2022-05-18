@@ -154,10 +154,12 @@ model.to(device)
 if args.ddp:
     # Wrap the model in DDP wrapper
     ddp_model = DDP(model, device_ids=[rank], output_device=rank)
+    model = ddp_model
+
 
 print('MODEL: ')
-print(ddp_model.apply(init_weights))
-print(f'The model has {count_parameters(ddp_model):,} trainable parameters')
+print(model.apply(init_weights))
+print(f'The model has {count_parameters(model):,} trainable parameters')
 
 # optimizer and loss
 optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -210,7 +212,7 @@ for epoch in range(EPOCHS):
 print('final model saved at:  ', f'trained_models/opennmt-version1-model.pt')
 
 # testing
-ddp_model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))
+model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))
 
 ''' FOR DDP '''
 if args.ddp:

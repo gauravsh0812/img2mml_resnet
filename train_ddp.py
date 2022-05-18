@@ -7,7 +7,7 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
 
     model.train()  # train mode is ON i.e. dropout and normalization tech. will be used
 
-    train_dataloader.sampler.set_epoch(i)
+    # train_dataloader.sampler.set_epoch(i)
     
     epoch_loss = 0
 
