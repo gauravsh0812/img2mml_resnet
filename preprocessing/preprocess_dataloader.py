@@ -124,7 +124,7 @@ def preprocess(device, batch_size, args_arr):
     # creating dataloader
     train_dataloader = DataLoader(train_dataset,
                                   batch_size=batch_size,
-                                  num_workers=0,
+                                  num_workers=4,
                                   shuffle=True,
                                   collate_fn=mypadcollate,
                                   pin_memory=False)
@@ -136,7 +136,7 @@ def preprocess(device, batch_size, args_arr):
 
     test_dataloader = DataLoader(imml_test,
                                  batch_size=batch_size,
-                                 num_workers=0,
+                                 num_workers=4,
                                  shuffle=True,
                                  collate_fn=mypadcollate,
                                  pin_memory=False)

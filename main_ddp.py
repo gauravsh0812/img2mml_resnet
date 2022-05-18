@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser()
 ''' FOR DDP '''
 parser.add_argument( '--gpu_num', type=int, metavar='', required=False, default=0,
                             help='which gpu core want to use?')
-parser.add_argument("--ddp", default=False, action="store_true",
+parser.add_argument("--ddp", default=True, action="store_true",
                     help="should run in DDP mode or single GPU")
 parser.add_argument( '--batch_size', type=int, metavar='', required=True,
                             help='Batch size')
