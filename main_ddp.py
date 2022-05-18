@@ -25,7 +25,7 @@ from model.cnn_encoder import OpenNMTEncoder, OpenNMTDecoder, OpenNMTImg2Seq
 # argument
 parser = argparse.ArgumentParser()
 ''' FOR DDP '''
-parser.add_argument( '--gpu_num', type=int, metavar='', required=True,
+parser.add_argument( '--gpu_num', type=int, metavar='', required=False, default=0,
                             help='which gpu core want to use?')
 parser.add_argument("--ddp", default=False, action="store_true",
                     help="should run in DDP mode or single GPU")
@@ -35,10 +35,16 @@ parser.add_argument( '--epochs', type=int, metavar='', required=True,
                             help='number of epochs')
 args = parser.parse_args()
 
-rank = args.gpu_num           # sequential id of GPU
-
 # os.environ["CUDA_VISIBLE_DEVICES"]="1"
 # os.environ['CUDA_LAUNCH_BLOCKING']="1"
+
+def set_random_seed(seed):
+    # set up seed
+    SEED = seed
+    random.seed(SEED)
+    np.random.seed(SEED)
+    torch.manual_seed(SEED)
+    torch.cuda.manual_seed(SEED)
 
 def define_model(vocab, DEVICE):#, TRG_PAD_IDX, OUTPUT_DIM):
     '''
@@ -126,19 +132,26 @@ EPOCHS = args.epochs
 CLIP = 1
 batch_size = args.batch_size
 best_valid_loss = float('inf')
+rank = args.gpu_num           # sequential id of GPU
 
-'''  FOR DDP '''
-if args.ddp:
-    # parameters needed for DDP:
-    world_size = torch.cuda.device_count()  # total number of GPUs
-
-    print(f'DDP_Model running on rank: {rank}...')
-    setup(rank, world_size)
 
 device = torch.device('cuda'if torch.cuda.is_available() else 'cpu')
 torch.cuda.set_device(rank)
 assert torch.cuda.current_device() == rank
 
+# set_random_seed
+set_random_seed(seed=42)
+
+'''  FOR DDP '''
+# if args.ddp:
+#     # parameters needed for DDP:
+#     world_size = torch.cuda.device_count()  # total number of GPUs
+#
+#     print(f'DDP_Model running on rank: {rank}...')
+#     setup(rank, world_size)
+
+# Initializes the distributed backend which will take care of sychronizing nodes/GPUs
+torch.distributed.init_process_group(backend="nccl")
 
 ''' FOR DDP '''
 if args.ddp:
@@ -162,14 +175,17 @@ print(model.apply(init_weights))
 print(f'The model has {count_parameters(model):,} trainable parameters')
 
 # optimizer and loss
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.Adam(model.parameters(), lr=0.0001)
 criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
 
 # to save trained model and logs
-FOLDER = ['trained_models', 'logs']
-for f in FOLDER:
-    if not os.path.exists(f):
-        os.mkdir(f)
+# it is not a good practice to to create directories while using DDP
+if not args.DDP:
+    FOLDER = ['trained_models', 'logs']
+    for f in FOLDER:
+        if not os.path.exists(f):
+            os.mkdir(f)
+
 # to log losses after every epoch
 loss_file = open('logs/loss_file.txt', 'w')
 

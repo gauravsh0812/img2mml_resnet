@@ -15,14 +15,6 @@ from torch.nn.utils.rnn import pad_sequence
 from functools import partial
 
 
-
-# set up seed
-SEED = 1234
-random.seed(SEED)
-np.random.seed(SEED)
-torch.manual_seed(SEED)
-torch.cuda.manual_seed(SEED)
-
 class Img2MML_dataset(Dataset):
     def __init__(self, dataframe, vocab, tokenizer):
         self.dataframe = dataframe
@@ -67,7 +59,7 @@ def preprocess(device, batch_size, args_arr):
         ddp = True
     else:
         ddp = False
-    
+
     print('ddp: ', ddp)
     # reading raw text files
     mml_txt = open('data/mml.txt').read().split('\n')[:-1]
@@ -142,18 +134,7 @@ def preprocess(device, batch_size, args_arr):
                                 vocab,
                                 tokenizer)
 
-    ''' FOR DDP '''
-    if ddp:
-        test_sampler = DistributedSampler(imml_test,
-                                          num_replicas=world_size,
-                                          rank=rank,
-                                          shuffle=True,
-                                          seed=42)
-        test_dataset = test_sampler
-    else:
-        test_dataset = imml_test
-
-    test_dataloader = DataLoader(test_dataset,
+    test_dataloader = DataLoader(imml_test,
                                  batch_size=batch_size,
                                  num_workers=0,
                                  shuffle=True,
@@ -165,18 +146,7 @@ def preprocess(device, batch_size, args_arr):
                                vocab,
                                tokenizer)
 
-    ''' FOR DDP '''
-    if ddp:
-        val_sampler = DistributedSampler(imml_val,
-                                        num_replicas=world_size,
-                                        rank=rank,
-                                        shuffle=True,
-                                        seed=42)
-        val_dataset = val_sampler
-    else:
-        val_dataset = imml_val
-
-    val_dataloader = DataLoader(val_dataset,
+    val_dataloader = DataLoader(imml_val,
                                 batch_size=batch_size,
                                 num_workers=0,
                                 shuffle=True,
