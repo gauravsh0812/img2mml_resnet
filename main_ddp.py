@@ -25,16 +25,16 @@ from model.cnn_encoder import OpenNMTEncoder, OpenNMTDecoder, OpenNMTImg2Seq
 # argument
 parser = argparse.ArgumentParser()
 ''' FOR DDP '''
-parser.add_argument( '--gpu_num', type=int, metavar='', required=False, default=0,
+parser.add_argument( '--local_rank', type=int, metavar='', required=False, default=0,
                             help='which gpu core want to use?')
-parser.add_argument("--ddp", default=True, action="store_true",
-                    help="should run in DDP mode or single GPU")
+# parser.add_argument("--ddp", default=True, action="store_true",
+#                     help="should run in DDP mode or single GPU")
 parser.add_argument( '--batch_size', type=int, metavar='', required=True,
                             help='Batch size')
 parser.add_argument( '--epochs', type=int, metavar='', required=True,
                             help='number of epochs')
 args = parser.parse_args()
-
+ddp = True
 # os.environ["CUDA_VISIBLE_DEVICES"]="1"
 # os.environ['CUDA_LAUNCH_BLOCKING']="1"
 
@@ -132,7 +132,7 @@ EPOCHS = args.epochs
 CLIP = 1
 batch_size = args.batch_size
 best_valid_loss = float('inf')
-rank = args.gpu_num           # sequential id of GPU
+rank = args.local_rank           # sequential id of GPU
 
 
 device = torch.device('cuda'if torch.cuda.is_available() else 'cpu')
@@ -154,7 +154,7 @@ set_random_seed(seed=42)
 torch.distributed.init_process_group(backend="nccl")
 
 ''' FOR DDP '''
-if args.ddp:
+if ddp:#args.ddp:
     train_dataloader, test_dataloader, val_dataloade, vocab = preprocess(device, batch_size, [rank, world_size])
 else:
     train_dataloader, test_dataloader, val_dataloader, vocab = preprocess(device, batch_size, [])
@@ -164,7 +164,7 @@ model = define_model(vocab, device)
 model.to(device)
 
 ''' FOR DDP '''
-if args.ddp:
+if ddp:#args.ddp:
     # Wrap the model in DDP wrapper
     ddp_model = DDP(model, device_ids=[rank], output_device=rank)
     model = ddp_model
@@ -180,7 +180,7 @@ criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
 
 # to save trained model and logs
 # it is not a good practice to to create directories while using DDP
-if not args.DDP:
+if not ddp:#args.DDP:
     FOLDER = ['trained_models', 'logs']
     for f in FOLDER:
         if not os.path.exists(f):
@@ -195,7 +195,7 @@ for epoch in range(EPOCHS):
 
     # train_dataloader.sampler.set_epoch(epoch)
     ''' FOR DDP '''
-    if args.ddp:
+    if ddp:#args.ddp:
         train_loss = mp.spawn(train, args= (ddp_model, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False), nprocs=world_size, join=True)
         val_loss = mp.spawn(evaluate, args=(ddp_model, batch_size, val_dataloader, criterion, device, True), nprocs=world_size, join=True)
     else:
@@ -221,7 +221,7 @@ for epoch in range(EPOCHS):
     loss_file.write(f'\t Val. Loss: {val_loss:.3f} |  Val. PPL: {math.exp(val_loss):7.3f}\n')
 
     ''' FOR DDP     '''
-    if args.ddp:
+    if ddp:#args.ddp:
         cleanup()
 
 
@@ -231,7 +231,7 @@ print('final model saved at:  ', f'trained_models/opennmt-version1-model.pt')
 model.load_state_dict(torch.load(f'trained_models/opennmt-version1-model.pt'))
 
 ''' FOR DDP '''
-if args.ddp:
+if ddp:#args.ddp:
     test_loss = mp.spawn(evaluate, args=(ddp_model, batch_size, test_dataloader, criterion, device, True), nprocs=world_size, join=True)
 else:
     test_loss, encoder, decoder = evaluate(model, vocab, batch_size, test_dataloader, criterion, device, True)
