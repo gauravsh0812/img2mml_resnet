@@ -34,7 +34,7 @@ parser.add_argument( '--batch_size', type=int, metavar='', required=True,
 parser.add_argument( '--epochs', type=int, metavar='', required=True,
                             help='number of epochs')
 args = parser.parse_args()
-ddp = True
+ddp = False
 # os.environ["CUDA_VISIBLE_DEVICES"]="1"
 # os.environ['CUDA_LAUNCH_BLOCKING']="1"
 
@@ -134,10 +134,10 @@ batch_size = args.batch_size
 best_valid_loss = float('inf')
 rank = args.local_rank           # sequential id of GPU
 
-
-device = torch.device('cuda'if torch.cuda.is_available() else 'cpu')
-torch.cuda.set_device(rank)
-assert torch.cuda.current_device() == rank
+device = torch.device('cuda:{rank}'if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cuda'if torch.cuda.is_available() else 'cpu')
+# torch.cuda.set_device(rank)
+# assert torch.cuda.current_device() == rank
 
 # set_random_seed
 set_random_seed(seed=42)
@@ -151,7 +151,7 @@ set_random_seed(seed=42)
 #     setup(rank, world_size)
 
 # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
-torch.distributed.init_process_group(backend="nccl")
+if ddp: torch.distributed.init_process_group(backend="nccl")
 
 ''' FOR DDP '''
 if ddp:#args.ddp:
