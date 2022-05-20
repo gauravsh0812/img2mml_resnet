@@ -45,9 +45,11 @@ class My_pad_collate(object):
 
         # padding
         padded_mml_tensor = pad_sequence(_mml, padding_value=0)
-        _img = [int(i) for i in _img]
+        _img = [i for i in _img]
+        
 
-        return torch.Tensor(_img).to(self.device), padded_mml_tensor.to(self.device)
+        #return torch.Tensor(_img).to(self.device), padded_mml_tensor.to(self.device)
+        return torch.stack(_img).to(self.device), padded_mml_tensor.to(self.device)
 
 
 def preprocess(device, batch_size, args_arr):
@@ -68,7 +70,7 @@ def preprocess(device, batch_size, args_arr):
     # adding <sos> and <eos> tokens then creating a dataframe
     # raw_mml_data = {'ID': [f'{num}' for num in image_num],
     #                 'MML': [('<sos> '+ mml + ' <eos>') for mml in mml_txt]}
-    raw_mml_data = {'ID': [f'data/image_tensors/{num}.txt' for num in image_num],
+    raw_mml_data = {'ID': [torch.load(f'data/image_tensors/{num}.txt') for num in image_num],
                     'MML': [('<sos> '+ mml + ' <eos>') for mml in mml_txt]}
 
     df = pd.DataFrame(raw_mml_data, columns=['ID','MML'])

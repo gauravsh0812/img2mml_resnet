@@ -13,7 +13,7 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
 
     trg_seqs = open('logs/train_targets.txt', 'w')
     pred_seqs = open('logs/train_predicted.txt', 'w')
-
+    
     for i, (img, mml) in enumerate(train_dataloader):
 
         trg = mml.to(device, dtype=torch.int64)
@@ -21,10 +21,12 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         # print('train batch: ', batch_size.shape)
 
         # loading image Tensors
-        srcTensor = []
-        for _i in img:
-            srcTensor.append(torch.load(f'data/image_tensors/{int(_i)}.txt'))
-        src = torch.stack(srcTensor).to(device)
+        # srcTensor = []
+        # for _i in img:
+        #    srcTensor.append(torch.load(f'data/image_tensors/{int(_i)}.txt'))
+        # src = (torch.stack(srcTensor)).to(device)
+
+        src = img.to(device)
 
         print('trg_shape: ', trg.shape)
         print('src shape:  ', src.shape)
