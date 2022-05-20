@@ -66,7 +66,9 @@ def preprocess(device, batch_size, args_arr):
     image_num = range(0,len(mml_txt))
 
     # adding <sos> and <eos> tokens then creating a dataframe
-    raw_mml_data = {'ID': [f'{num}' for num in image_num],
+    # raw_mml_data = {'ID': [f'{num}' for num in image_num],
+    #                 'MML': [('<sos> '+ mml + ' <eos>') for mml in mml_txt]}
+    raw_mml_data = {'ID': [f'data/image_tensors/{num}.txt' for num in image_num],
                     'MML': [('<sos> '+ mml + ' <eos>') for mml in mml_txt]}
 
     df = pd.DataFrame(raw_mml_data, columns=['ID','MML'])
