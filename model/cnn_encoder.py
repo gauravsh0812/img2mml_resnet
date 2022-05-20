@@ -32,6 +32,7 @@ class OpenNMTEncoder(nn.Module):
 
     def forward(self, src):
         # img = [batch, Cin, W, H]
+        print('src:  ', src.shape)
         batch = src.shape[0]
         C_in = src.shape[1]
 
@@ -50,6 +51,7 @@ class OpenNMTEncoder(nn.Module):
         src = F.relu(self.batch_norm3(self.conv_layer5(src)))
         # layer 6
         enc_output = F.relu(self.conv_layer6(src))    # [B, 512, w, h]
+        print('enc_output: ', enc_output.shape)
 
         # flatten the last two dimensions of enc_output i.e.
         # [batch, 512, W'xH']
@@ -131,12 +133,14 @@ class OpenNMTAttention(nn.Module):
         #encoder_outputs = [src len, batch size, enc dim ]    where src_len = H*W+1
 
         batch_size = encoder_outputs.shape[1]
+        print('batch: ', batch_size)
         src_len = encoder_outputs.shape[0]
         hidden = hidden.repeat(src_len, 1, 1).permute(1, 0, 2)
         encoder_outputs = encoder_outputs.permute(1, 0, 2)      # Hid: [batch size, src len, dec hid dim]   out: [batch size, src len, enc dim ]
         energy = torch.tanh(self.attn(torch.cat((hidden, encoder_outputs), dim = 2)))   #[batch size, src len, dec hid dim]
         attention = self.v(energy).squeeze(2)       # [batch size, src len]
         a = F.softmax(attention, dim=1).unsqueeze(0)        #[1, batch size, src len]
+        print('a: ', a.shape)
         weighted = torch.bmm(a.permute(1, 0, 2), encoder_outputs)   # [B, 1, e]
 
         return weighted.permute(1, 0, 2)
@@ -199,7 +203,8 @@ class OpenNMTDecoder(nn.Module):
 
         # Calculate attention
         final_attn_encoding = self.attention(encoder_out, hidden)    # [ 1, B, enc-dim]
-
+        
+        print(embeddings.shape,  final_attn_encoding.shape)
         # lstm input
         lstm_input = torch.cat((embeddings, final_attn_encoding), dim=2)    # [1, B, enc+embed]
         lstm_input = self.lstm_input_layer(lstm_input)                      # [1, B, embed]
@@ -229,9 +234,10 @@ class OpenNMTImg2Seq(nn.Module):
         # to store all separate outputs of individual token
         outputs = torch.zeros(trg_len, batch_size, trg_dim).to(self.device) #[trg_len, batch, output_dim]
         # for each token, [batch, output_dim]
-
+        print('im2mml src shape:  ', src.shape, trg.shape)
         # run the encoder --> get flattened FV of images
         encoder_out, hidden, cell = self.encoder(src)       # enc_output: [HxW+1, B, H*2]   Hid/cell: [1, B, Hid]
+        print('encoder_out: ', encoder_out.shape)
 
         dec_src = trg[0,:]   # [1, B]
 

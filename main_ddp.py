@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import os
+import os, random
+import numpy as np
 import time
 import math
 import argparse
@@ -134,7 +135,7 @@ batch_size = args.batch_size
 best_valid_loss = float('inf')
 rank = args.local_rank           # sequential id of GPU
 
-device = torch.device('cuda:{rank}'if torch.cuda.is_available() else 'cpu')
+device = torch.device(f'cuda'if torch.cuda.is_available() else 'cpu')
 # device = torch.device('cuda'if torch.cuda.is_available() else 'cpu')
 # torch.cuda.set_device(rank)
 # assert torch.cuda.current_device() == rank
@@ -161,6 +162,7 @@ else:
 
 TRG_PAD_IDX = 0     # can be obtained from vocab in preprocessing <pad>:0, <unk>:1, <sos>:2, <eos>:3
 model = define_model(vocab, device)
+model = nn.DataParallel(model)
 model.to(device)
 
 ''' FOR DDP '''
