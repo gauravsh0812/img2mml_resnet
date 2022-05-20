@@ -76,7 +76,7 @@ class OpenNMTEncoder(nn.Module):
         final_encoder_output = final_encoder_output.view(
                                             final_encoder_output.shape[0]*final_encoder_output.shape[1],
                                             final_encoder_output.shape[2], final_encoder_output.shape[3])
-        
+
         return final_encoder_output, hidden, cell       # O:[H*W+1, B, Hid]     H:[1, B, hid]
 
 
@@ -203,7 +203,7 @@ class OpenNMTDecoder(nn.Module):
 
         # Calculate attention
         final_attn_encoding = self.attention(encoder_out, hidden)    # [ 1, B, enc-dim]
-        
+
         print(embeddings.shape,  final_attn_encoding.shape)
         # lstm input
         lstm_input = torch.cat((embeddings, final_attn_encoding), dim=2)    # [1, B, enc+embed]
@@ -225,8 +225,12 @@ class OpenNMTImg2Seq(nn.Module):
         self.decoder = decoder
         self.device = device
 
-    def forward(self, src, trg,  vocab, write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
+    # def forward(self, src, trg,  vocab, write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
+    def forward(self, tdi, vocab, write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
 
+        (img, mml) = tdi
+        trg = mml.to(device, dtype=torch.int64)
+        src = img.to(device)
         batch_size = trg.shape[1]
         trg_len = trg.shape[0]
         trg_dim = self.decoder.output_dim

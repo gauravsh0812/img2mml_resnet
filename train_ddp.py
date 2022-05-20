@@ -8,33 +8,35 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
     model.train()  # train mode is ON i.e. dropout and normalization tech. will be used
 
     # train_dataloader.sampler.set_epoch(i)
-    
+
     epoch_loss = 0
 
     trg_seqs = open('logs/train_targets.txt', 'w')
     pred_seqs = open('logs/train_predicted.txt', 'w')
-    
-    for i, (img, mml) in enumerate(train_dataloader):
 
-        trg = mml.to(device, dtype=torch.int64)
-        batch_size = trg.shape[1]
-        # print('train batch: ', batch_size.shape)
+    # for i, (img, mml) in enumerate(train_dataloader):
+    for i, tdi in enumerate(train_dataloader):
 
-        # loading image Tensors
-        # srcTensor = []
-        # for _i in img:
-        #    srcTensor.append(torch.load(f'data/image_tensors/{int(_i)}.txt'))
-        # src = (torch.stack(srcTensor)).to(device)
-
-        src = img.to(device)
-
-        print('trg_shape: ', trg.shape)
-        print('src shape:  ', src.shape)
+        # trg = mml.to(device, dtype=torch.int64)
+        # batch_size = trg.shape[1]
+        # # print('train batch: ', batch_size.shape)
+        #
+        # # loading image Tensors
+        # # srcTensor = []
+        # # for _i in img:
+        # #    srcTensor.append(torch.load(f'data/image_tensors/{int(_i)}.txt'))
+        # # src = (torch.stack(srcTensor)).to(device)
+        #
+        # src = img.to(device)
+        #
+        # print('trg_shape: ', trg.shape)
+        # print('src shape:  ', src.shape)
 
         # setting gradients to zero
         optimizer.zero_grad()
 
-        output, pred, encoder, decoder = model(src, trg, vocab, True, True, 0.5)
+        # output, pred, encoder, decoder = model(src, trg, vocab, True, True, 0.5)
+        output, pred, encoder, decoder = model( tdi, vocab, True, True, 0.5 )
 
         # translating and storing trg and pred sequences in batches
         if write_file:
