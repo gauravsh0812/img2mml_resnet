@@ -229,8 +229,10 @@ class OpenNMTImg2Seq(nn.Module):
     def forward(self, tdi, vocab, write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
 
         (img, mml) = tdi
-        trg = mml.to(device, dtype=torch.int64)
-        src = img.to(device)
+        trg = mml.to(self.device, dtype=torch.int64)
+        print('im2mml src shape:  ',  trg.shape)
+        src = img.to(self.device)
+        print('im2mml src shape:  ', src.shape, trg.shape)
         batch_size = trg.shape[1]
         trg_len = trg.shape[0]
         trg_dim = self.decoder.output_dim
@@ -238,7 +240,7 @@ class OpenNMTImg2Seq(nn.Module):
         # to store all separate outputs of individual token
         outputs = torch.zeros(trg_len, batch_size, trg_dim).to(self.device) #[trg_len, batch, output_dim]
         # for each token, [batch, output_dim]
-        print('im2mml src shape:  ', src.shape, trg.shape)
+        
         # run the encoder --> get flattened FV of images
         encoder_out, hidden, cell = self.encoder(src)       # enc_output: [HxW+1, B, H*2]   Hid/cell: [1, B, Hid]
         print('encoder_out: ', encoder_out.shape)
