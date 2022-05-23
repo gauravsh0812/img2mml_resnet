@@ -230,9 +230,9 @@ class OpenNMTImg2Seq(nn.Module):
 
         (img, mml) = tdi
         trg = mml.to(self.device, dtype=torch.int64)
-        print('im2mml src shape:  ',  trg.shape)
+        print('im2mml trg shape:  ',  trg.shape)
         src = img.to(self.device)
-        print('im2mml src shape:  ', src.shape, trg.shape)
+        print('im2mml src, trg shape:  ', src.shape, trg.shape)
         batch_size = trg.shape[1]
         trg_len = trg.shape[0]
         trg_dim = self.decoder.output_dim
