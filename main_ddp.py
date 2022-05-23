@@ -36,7 +36,8 @@ parser.add_argument( '--epochs', type=int, metavar='', required=True,
                             help='number of epochs')
 args = parser.parse_args()
 ddp = False
-# os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0, 1"
+# export CUDA_VISIBLE_DEVICES=0,1
 # os.environ['CUDA_LAUNCH_BLOCKING']="1"
 
 def set_random_seed(seed):
@@ -154,6 +155,9 @@ set_random_seed(seed=42)
 # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
 if ddp: torch.distributed.init_process_group(backend="nccl")
 
+torch.backends.cudnn.benchmark = True
+torch.backends.cudnn.enabled = True
+
 ''' FOR DDP '''
 if ddp:#args.ddp:
     train_dataloader, test_dataloader, val_dataloade, vocab = preprocess(device, batch_size, [rank, world_size])
@@ -162,8 +166,9 @@ else:
 
 TRG_PAD_IDX = 0     # can be obtained from vocab in preprocessing <pad>:0, <unk>:1, <sos>:2, <eos>:3
 model = define_model(vocab, device)
-model = nn.DataParallel(model)
-model.to(device)
+model = nn.DataParallel(model, device_ids=[0, 1])
+# model.to(device)
+model.cuda()
 
 ''' FOR DDP '''
 if ddp:#args.ddp:
