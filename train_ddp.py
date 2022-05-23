@@ -21,20 +21,20 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         trg = mml
         trg = trg.permute(1,0)    # trg: [len, B] --> [B, len]
         # trg.to(device, dtype=torch.int64)
-        trg.to('cuda')
+        trg.to(device, dtype=torch.int64)
         # trg = mml.to(device, dtype=torch.int64)
         batch_size = trg.shape[1]
         # print('train batch: ', batch_size.shape)
 
         # loading image Tensors
-        # srcTensor = []
-        # for _i in img:
-        #    srcTensor.append(torch.load(f'data/image_tensors/{int(_i)}.txt'))
-        # src = (torch.stack(srcTensor)).to(device)
+        srcTensor = []
+        for _i in img:
+           srcTensor.append(torch.load(f'data/image_tensors/{int(_i)}.txt'))
+        src = (torch.stack(srcTensor)).to(device)
 
         # src = img.to(device)
-        src = img
-        src.to('cuda')
+        # src = img
+        # src.to(device)
 
         # print('trg_shape: ', trg.shape)
         # print('src shape:  ', src.shape)
