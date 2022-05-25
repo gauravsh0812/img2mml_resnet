@@ -166,9 +166,9 @@ else:
 
 TRG_PAD_IDX = 0     # can be obtained from vocab in preprocessing <pad>:0, <unk>:1, <sos>:2, <eos>:3
 model = define_model(vocab, device)
-model = nn.DataParallel(model, device_ids=[0, 1])
+model = nn.DataParallel(model.cuda(), device_ids=[0, 1])
 # model.to(device)
-model.cuda()
+
 
 ''' FOR DDP '''
 if ddp:#args.ddp:
