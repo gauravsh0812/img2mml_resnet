@@ -271,5 +271,5 @@ class OpenNMTImg2Seq(nn.Module):
             dec_src = trg[t] if teacher_force else top1
 
 
-        if  write_flag: return outputs, pred_seq_per_batch, self.encoder, self.decoder
+        if  write_flag: return outputs, pred_seq_per_batch#, self.encoder, self.decoder
         else: return outputs, self.encoder, self.decoder

@@ -42,7 +42,8 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         # setting gradients to zero
         optimizer.zero_grad()
 
-        output, pred, encoder, decoder = model(src, trg, vocab, True, True, 0.5)
+        #output, pred, encoder, decoder = model(src, trg, vocab, True, True, 0.5)
+        output, pred = model(src, trg, vocab, True, True, 0.5)
         # output, pred, encoder, decoder = model( tdi, vocab, True, True, 0.5 )
 
         # translating and storing trg and pred sequences in batches
@@ -77,4 +78,5 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         epoch_loss += loss.item()
         net_loss = epoch_loss/len(train_dataloader)
 
-    return net_loss, encoder, decoder
+    #return net_loss, encoder, decoder
+    return net_loss
