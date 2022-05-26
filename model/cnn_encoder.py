@@ -204,12 +204,15 @@ class OpenNMTDecoder(nn.Module):
         # Calculate attention
         final_attn_encoding = self.attention(encoder_out, hidden)    # [ 1, B, enc-dim]
 
-        # print(embeddings.shape,  final_attn_encoding.shape)
+#        print('attention done...')
+
         # lstm input
         lstm_input = torch.cat((embeddings, final_attn_encoding), dim=2)    # [1, B, enc+embed]
         lstm_input = self.lstm_input_layer(lstm_input)                      # [1, B, embed]
+#        print('ready for lstm...')
         # print(lstm_input.shape,  hidden.shape)
         lstm_output, (hidden, cell) = self.decode_step(lstm_input, (hidden, cell))    # H: [1, B, hid]     O: [1, B, Hid*2]
+ #       print('lstm done...')
         predictions = self.fc(lstm_output)  # [1, Batch, output_dim]
         # print(predictions.shape)
 
@@ -242,20 +245,24 @@ class OpenNMTImg2Seq(nn.Module):
 
         # to store all separate outputs of individual token
         outputs = torch.zeros(trg_len, batch_size, trg_dim).to(self.device) #[trg_len, batch, output_dim]
+  #      print('outputs shape initially: ', outputs.shape)
         # for each token, [batch, output_dim]
 
         # run the encoder --> get flattened FV of images
         encoder_out, hidden, cell = self.encoder(src)       # enc_output: [HxW+1, B, H*2]   Hid/cell: [1, B, Hid]
-        # print('encoder_out: ', encoder_out.shape)
+ #       print('encoder done...')
+        # print('encopder done...t('encoder_out: ', encoder_out.shape)
 
         dec_src = trg[0,:]   # [1, B]
 
         if write_flag:
-            pred_seq_per_batch = torch.zeros(trg.shape)
+            pred_seq_per_batch = torch.zeros(trg.shape).to(self.device)
             init_idx = vocab.stoi['<sos>']  # 2
             pred_seq_per_batch[0,:] = torch.full(dec_src.shape, init_idx)
 
         for t in range(1, trg_len):
+
+            # print(trg_len, t)
 
             output, hidden, cell = self.decoder(dec_src, encoder_out, hidden, cell)     # O: [B, out]   H: [1, B, Hid]
             outputs[t]=output
@@ -269,7 +276,9 @@ class OpenNMTImg2Seq(nn.Module):
                 teacher_force = random.random() < teacher_forcing_ratio
 
             dec_src = trg[t] if teacher_force else top1
+#        print('this batch done.....')    
 
-
-        if  write_flag: return outputs, pred_seq_per_batch#, self.encoder, self.decoder
+        if  write_flag: 
+            return outputs.permute(1,0,2), pred_seq_per_batch.permute(1,0) #,  self.encoder, self.decoder
+            #print('returning...')
         else: return outputs, self.encoder, self.decoder

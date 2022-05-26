@@ -16,7 +16,7 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
 
     for i, (img, mml) in enumerate(train_dataloader):
     # for i, tdi in enumerate(train_dataloader):
-
+        #print(f'============== {i} ================')
         # trg = trg.permute(1,0)    # trg: [len, B] --> [B, len]
         trg = mml
         trg = trg.permute(1,0)    # trg: [len, B] --> [B, len]
@@ -45,7 +45,8 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         #output, pred, encoder, decoder = model(src, trg, vocab, True, True, 0.5)
         output, pred = model(src, trg, vocab, True, True, 0.5)
         # output, pred, encoder, decoder = model( tdi, vocab, True, True, 0.5 )
-
+        pred = pred.permute(1,0) # [B, len ]--> [len, B]
+        output = output.permute(1,0,2)
         # translating and storing trg and pred sequences in batches
         if write_file:
             batch_size = trg.shape[1]
@@ -59,12 +60,23 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
                 pred_seqs.write(pred_seq+'\n')
 
         #trg = [trg len, batch size]
+        trg = trg.permute(1,0)
         #output = [trg len, batch size, output dim]
+        #print('output permute size: ', output.shape)
+        #print('trg:  ', trg.shape)
+        #print('output view size: ', output[1:].contiguous().view(-1, output.shape[-1]).shape)
+        #print('trg view shape: ', trg[1:].view(-1).shape)
+        
+        #output = [B, trg len, output dim] --> [len, B, out]
         output_dim = output.shape[-1]
-        output = output[1:].view(-1, output_dim)
+        output = output[1:].contiguous().view(-1, output_dim)
+ #       print('output size: ', output.shape)
         trg = trg[1:].view(-1)
-
-        loss = criterion(output, trg)
+        #print('trg dtype: ', trg.dtype)
+        #print('output dtype: ', output.dtype)
+        #print('trg:  ', trg.to(torch.int64))
+        #print('output: ', output.to(torch.int64))
+        loss = criterion(output, trg.to(torch.int64))
         # print('output size: ', output.shape)
         # print('trg:  ', trg.shape)
         # print('loss:  ', loss.shape)
