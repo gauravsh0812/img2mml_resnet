@@ -62,7 +62,7 @@ def define_model(vocab, DEVICE):#, TRG_PAD_IDX, OUTPUT_DIM):
     DEC_EMB_DIM = 256
     HID_DIM = 512
     N_LAYERS = 1
-    DROPOUT = 0.5
+    DROPOUT = 0.3
 
     print('building model...')
     # ENC = Encoder()
@@ -182,7 +182,7 @@ print(model.apply(init_weights))
 print(f'The model has {count_parameters(model):,} trainable parameters')
 
 # optimizer and loss
-optimizer = optim.Adam(model.parameters(), lr=0.0001)
+optimizer = optim.Adam(model.parameters(), lr=0.0005)
 criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
 
 # to save trained model and logs
