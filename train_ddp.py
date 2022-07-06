@@ -54,7 +54,10 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         if write_file:
             batch_size = trg.shape[1]
             for idx in range(batch_size):
-                print('train target eqn: ', trg[:,idx])
+                print('train all target eqns: ', trg)
+                print(' ')
+                print('train target eqn: ', trg[idx,:])
+
                 trg_arr = [vocab.itos[itrg] for itrg in trg[:,idx]]
                 trg_seq = " ".join(trg_arr)
                 trg_seqs.write(trg_seq + '\n')
