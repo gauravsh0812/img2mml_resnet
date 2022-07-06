@@ -3,6 +3,8 @@
 import time, pandas
 import torch
 
+torch.set_printoptions(threshold=10_000)
+
 def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterion, device, clip, write_file):
 
     model.train()  # train mode is ON i.e. dropout and normalization tech. will be used
