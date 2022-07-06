@@ -201,7 +201,7 @@ for epoch in range(EPOCHS):
     start_time = time.time()
     write_train_file_flag = False
     write_val_file_flag = False
-    if epoch%50:
+    if epoch%50==0:
         write_train_file_flag = True
         write_val_file_flag = True
     # train_dataloader.sampler.set_epoch(epoch)
