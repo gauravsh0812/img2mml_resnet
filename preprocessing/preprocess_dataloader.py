@@ -16,25 +16,45 @@ from functools import partial
 
 
 class Img2MML_dataset(Dataset):
-    def __init__(self, dataframe, vocab, tokenizer):
+    def __init__(self, dataframe, vocab):
         self.dataframe = dataframe
-
-        for l in range(len(self.dataframe)):
-            eqn = self.dataframe.iloc[l, 1]
-            indexed_eqn = []
-            for token in tokenizer(eqn):
-                if vocab[token] != None:
-                    indexed_eqn.append(vocab[token])
-                else:
-                    indexed_eqn.append(vocab['<unk>'])
-
-            self.dataframe.iloc[l, 1] = torch.Tensor(indexed_eqn)
+        self.vocab = vocab
 
     def __len__(self):
         return len(self.dataframe)
 
     def __getitem__(self, index):
-        return self.dataframe.iloc[index, 0], self.dataframe.iloc[index, 1]
+
+        eqn = self.dataframe.iloc[index, 1]
+        indexed_eqn = []
+        for token in eqn.split():
+            if token in self.vocab.keys():
+                indexed_eqn.append(self.vocab[token])
+            else:
+                indexed_eqn.append(self.vocab['<unk>'])
+
+        return self.dataframe.iloc[index, 0],torch.Tensor(indexed_eqn)
+
+# class Img2MML_dataset(Dataset):
+#     def __init__(self, dataframe, vocab, tokenizer):
+#         self.dataframe = dataframe
+#
+#         for l in range(len(self.dataframe)):
+#             eqn = self.dataframe.iloc[l, 1]
+#             indexed_eqn = []
+#             for token in tokenizer(eqn):
+#                 if vocab[token] != None:
+#                     indexed_eqn.append(vocab[token])
+#                 else:
+#                     indexed_eqn.append(vocab['<unk>'])
+#
+#             self.dataframe.iloc[l, 1] = torch.Tensor(indexed_eqn)
+#
+#     def __len__(self):
+#         return len(self.dataframe)
+#
+#     def __getitem__(self, index):
+#         return self.dataframe.iloc[index, 0], self.dataframe.iloc[index, 1]
 
 class My_pad_collate(object):
     def __init__(self, device):
@@ -46,7 +66,7 @@ class My_pad_collate(object):
         # padding
         padded_mml_tensor = pad_sequence(_mml, padding_value=0)
         _img = [i for i in _img]
-        
+
 
         #return torch.Tensor(_img).to(self.device), padded_mml_tensor.to(self.device)
         return torch.stack(_img).to(self.device), padded_mml_tensor.to(self.device)
