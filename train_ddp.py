@@ -52,6 +52,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         if write_file:
             batch_size = trg.shape[1]
             for idx in range(batch_size):
+                print('train target eqn: ', trg[:,idx])
                 trg_arr = [vocab.itos[itrg] for itrg in trg[:,idx]]
                 trg_seq = " ".join(trg_arr)
                 trg_seqs.write(trg_seq + '\n')
@@ -71,7 +72,6 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         #output = [B, trg len, output dim] --> [len, B, out]
         output_dim = output.shape[-1]
         output = output[1:].contiguous().view(-1, output_dim)
- #       print('output size: ', output.shape)
         trg = trg[1:].view(-1)
         #print('trg dtype: ', trg.dtype)
         #print('output dtype: ', output.dtype)
