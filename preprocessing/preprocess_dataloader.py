@@ -28,7 +28,7 @@ class Img2MML_dataset(Dataset):
         eqn = self.dataframe.iloc[index, 1]
         indexed_eqn = []
         for token in eqn.split():
-            if vocab[token] != None:
+            if self.vocab[token] != None:
                 indexed_eqn.append(self.vocab[token])
             else:
                 indexed_eqn.append(self.vocab['<unk>'])
