@@ -3,7 +3,7 @@
 import time, pandas
 import torch
 
-def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,device, clip, write_file):
+def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterion, device, clip, write_file):
 
     model.train()  # train mode is ON i.e. dropout and normalization tech. will be used
 
@@ -11,8 +11,9 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
 
     epoch_loss = 0
 
-    trg_seqs = open('logs/train_targets.txt', 'w')
-    pred_seqs = open('logs/train_predicted.txt', 'w')
+    if write_file:
+        trg_seqs = open(f'logs/train_targets_epoch_{epoch}.txt', 'w')
+        pred_seqs = open(f'logs/train_predicted_epoch_{epoch}.txt', 'w')
 
     for i, (img, mml) in enumerate(train_dataloader):
     # for i, tdi in enumerate(train_dataloader):
@@ -66,7 +67,7 @@ def train(model, vocab, batch_size, train_dataloader, optimizer, criterion,devic
         #print('trg:  ', trg.shape)
         #print('output view size: ', output[1:].contiguous().view(-1, output.shape[-1]).shape)
         #print('trg view shape: ', trg[1:].view(-1).shape)
-        
+
         #output = [B, trg len, output dim] --> [len, B, out]
         output_dim = output.shape[-1]
         output = output[1:].contiguous().view(-1, output_dim)

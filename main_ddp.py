@@ -199,7 +199,11 @@ loss_file = open('logs/loss_file.txt', 'w')
 for epoch in range(EPOCHS):
 
     start_time = time.time()
-
+    write_train_file_flag = False
+    write_val_file_flag = False
+    if epoch%50:
+        write_train_file_flag = True
+        write_val_file_flag = True
     # train_dataloader.sampler.set_epoch(epoch)
     ''' FOR DDP '''
     if ddp:#args.ddp:
@@ -207,9 +211,9 @@ for epoch in range(EPOCHS):
         val_loss = mp.spawn(evaluate, args=(ddp_model, batch_size, val_dataloader, criterion, device, True), nprocs=world_size, join=True)
     else:
         #train_loss, encoder, decoder = train(model, vocab, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
-        train_loss = train(model, vocab, batch_size, train_dataloader, optimizer, criterion, device, CLIP, False) # No writing outputs
+        train_loss = train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterion, device, CLIP, write_train_file_flag) # No writing outputs
         #val_loss, encoder, decoder = evaluate(model, vocab, batch_size, val_dataloader, criterion, device, True)
-        val_loss = evaluate(model, vocab, batch_size, val_dataloader, criterion, device, True)
+        val_loss = evaluate(model, epoch, vocab, batch_size, val_dataloader, criterion, device, write_val_file_flag)
 
     end_time=time.time()
     epoch_mins, epoch_secs = epoch_time(start_time, end_time)
@@ -244,7 +248,8 @@ if ddp:#args.ddp:
     test_loss = mp.spawn(evaluate, args=(ddp_model, batch_size, test_dataloader, criterion, device, True), nprocs=world_size, join=True)
 else:
     #test_loss, encoder, decoder = evaluate(model, vocab, batch_size, test_dataloader, criterion, device, True)
-    test_loss = evaluate(model, vocab, batch_size, test_dataloader, criterion, device, True)
+    epoch = 'test_0'
+    test_loss = evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device, True)
 
 print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
 loss_file.write(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
