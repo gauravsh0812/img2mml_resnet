@@ -16,7 +16,7 @@ from functools import partial
 
 
 class Img2MML_dataset(Dataset):
-    def __init__(self, dataframe, vocab):
+    def __init__(self, dataframe, vocab, tokenizer):
         self.dataframe = dataframe
         self.vocab = vocab
 
