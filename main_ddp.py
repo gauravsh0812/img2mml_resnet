@@ -17,7 +17,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from train_ddp import train
 from test_ddp import evaluate
 from preprocessing.preprocess_dataloader import preprocess
-from model.model import Encoder, Decoder, Img2Seq
+# from model.model import Encoder, Decoder, Img2Seq
 from model.cnn_encoder import OpenNMTEncoder, OpenNMTDecoder, OpenNMTImg2Seq
 
 # import torcheck  # can be used to check if the model is working fine or not. Also,
