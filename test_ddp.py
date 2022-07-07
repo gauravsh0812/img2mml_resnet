@@ -45,7 +45,6 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
             # translating and storing trg and pred sequences in batches
             if write_file:
                 #print('WRITING SEQ...')
-                batch_size = trg.shape[1]
                 for idx in range(batch_size):
                     #print(trg[:,idx])
                     trg_arr = [vocab.itos[int(itrg)] for itrg in trg[idx,:]]
