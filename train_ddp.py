@@ -11,8 +11,11 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
 
     epoch_loss = 0
 
+    # write the target file once as it will be same for every epoch
+    if epoch==0: trg_seqs = open(f'logs/train_targets.txt', 'w')
+
+    # opening predicted file
     if write_file:
-        trg_seqs = open(f'logs/train_targets.txt', 'w')
         pred_seqs = open(f'logs/train_predicted_epoch_{epoch}.txt', 'w')
 
     for i, (img, mml) in enumerate(train_dataloader):
@@ -51,10 +54,11 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
 
         # translating and storing trg and pred sequences in batches
         # writing target eqns
-        for idx in range(batch_size):
-            trg_arr = [vocab.itos[itrg] for itrg in trg.int()[idx,:]]
-            trg_seq = " ".join(trg_arr)
-            trg_seqs.write(trg_seq + '\n')
+        if epoch==0:
+            for idx in range(batch_size):
+                trg_arr = [vocab.itos[itrg] for itrg in trg.int()[idx,:]]
+                trg_seq = " ".join(trg_arr)
+                trg_seqs.write(trg_seq + '\n')
 
         if write_file:
             for idx in range(batch_size):

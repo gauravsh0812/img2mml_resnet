@@ -11,8 +11,10 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
 
     epoch_loss = 0
 
+    if epoch==0:
+        trg_seqs = open('logs/test_targets.txt', 'w')
+
     if write_file:
-        trg_seqs = open('logs/test_targets_epoch_{epoch}.txt', 'w')
         pred_seqs = open('logs/test_predicted_epoch_{epoch}.txt', 'w')
 
     with torch.no_grad():
@@ -42,8 +44,7 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
             output = output.permute(1,0,2)
 
             # translating and storing trg and pred sequences in batches
-            if write_file:
-                #print('WRITING SEQ...')
+            if epoch==0:
                 for idx in range(batch_size):
                     #print(trg[:,idx])
                     trg_arr = [vocab.itos[int(itrg)] for itrg in trg.int()[idx,:]]
@@ -51,6 +52,9 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
                     # print(trg_seq)
                     trg_seqs.write(trg_seq + '\n')
 
+            if write_file:
+                #print('WRITING SEQ...')
+                for idx in range(batch_size):
                     #print(trg.shape,  pred.shape)
                     pred_arr = [vocab.itos[ipred] for ipred in pred.int()[idx,:]]
                     pred_seq = " ".join(pred_arr)
