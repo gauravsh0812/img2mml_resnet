@@ -44,18 +44,21 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         optimizer.zero_grad()
 
         #output, pred, encoder, decoder = model(src, trg, vocab, True, True, 0.5)
+        # pred --> [B, len]
         output, pred = model(src, trg, vocab, True, True, 0.5)
         # output, pred, encoder, decoder = model( tdi, vocab, True, True, 0.5 )
         output = output.permute(1,0,2)
 
+
+
         # translating and storing trg and pred sequences in batches
         # writing target eqns
         batch_size = trg.shape[1]
-        print(trg)
-        print(trg.shape)
-        print(' ')
-        print(pred)
-        print(pred.shape)
+        # print(trg)
+        # print(trg.shape)
+        # print(' ')
+        # print(pred)
+        # print(pred.shape)
         for idx in range(batch_size):
             trg_arr = [vocab.itos[itrg] for itrg in trg.int()[idx,:]]
             trg_seq = " ".join(trg_arr)
