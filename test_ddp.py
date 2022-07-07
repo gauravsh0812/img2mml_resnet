@@ -40,7 +40,6 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
             # output, pred, encoder, decoder = model(src, trg, vocab, True)   # turn off teacher_forcing
             output, pred = model(src, trg, vocab, True)   # turn off teacher_forcing
             output = output.permute(1,0,2)
-            trg = trg.permute(1,0) # [len, B]
 
             # translating and storing trg and pred sequences in batches
             if write_file:
