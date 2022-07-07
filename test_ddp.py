@@ -25,7 +25,7 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
             trg = trg.permute(1,0)
             trg.to(device, dtype=torch.int64)
             # print('@test trg shape:  ', trg.shape)
-            batch_size = trg.shape[1]
+            batch_size = trg.shape[0]
 
             # loading image Tensors
             #srcTensor = []
@@ -39,7 +39,6 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
 
             # output, pred, encoder, decoder = model(src, trg, vocab, True)   # turn off teacher_forcing
             output, pred = model(src, trg, vocab, True)   # turn off teacher_forcing
-            pred = pred.permute(1,0) # [B, len ]--> [len, B]
             output = output.permute(1,0,2)
             trg = trg.permute(1,0) # [len, B]
 
@@ -49,13 +48,13 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
                 batch_size = trg.shape[1]
                 for idx in range(batch_size):
                     #print(trg[:,idx])
-                    trg_arr = [vocab.itos[int(itrg)] for itrg in trg[:,idx]]
+                    trg_arr = [vocab.itos[int(itrg)] for itrg in trg[idx,:]]
                     trg_seq = " ".join(trg_arr)
                     # print(trg_seq)
                     trg_seqs.write(trg_seq + '\n')
 
                     #print(trg.shape,  pred.shape)
-                    pred_arr = [vocab.itos[ipred] for ipred in pred.int()[:,idx]]
+                    pred_arr = [vocab.itos[ipred] for ipred in pred.int()[idx,:]]
                     pred_seq = " ".join(pred_arr)
                     pred_seqs.write(pred_seq+'\n')
 
