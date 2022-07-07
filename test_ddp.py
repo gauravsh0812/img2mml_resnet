@@ -46,7 +46,7 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
                 #print('WRITING SEQ...')
                 for idx in range(batch_size):
                     #print(trg[:,idx])
-                    trg_arr = [vocab.itos[int(itrg)] for itrg in trg[idx,:]]
+                    trg_arr = [vocab.itos[int(itrg)] for itrg in trg.int()[idx,:]]
                     trg_seq = " ".join(trg_arr)
                     # print(trg_seq)
                     trg_seqs.write(trg_seq + '\n')
@@ -64,7 +64,8 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
             output_dim = output.shape[-1]
             output = output[1:].contiguous().view(-1, output_dim)
             trg = trg[1:].contiguous().view(-1)
-            #print(trg.shape,  output.shape)
+
+            print('testing scripts:  ', trg.shape,  output.shape)
             #print(' ')
             #trg = [(trg len - 1) * batch size]
             #output = [(trg len - 1) * batch size, output dim]
