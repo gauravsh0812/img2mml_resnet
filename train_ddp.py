@@ -58,11 +58,11 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
                 print(' ')
                 print('train target eqn: ', trg[idx,:])
 
-                trg_arr = [vocab.itos[itrg] for itrg in trg[:,idx]]
+                trg_arr = [vocab.itos[itrg] for itrg in trg.int()[idx,:]]
                 trg_seq = " ".join(trg_arr)
                 trg_seqs.write(trg_seq + '\n')
 
-                pred_arr = [vocab.itos[ipred] for ipred in pred.int()[:,idx]]
+                pred_arr = [vocab.itos[ipred] for ipred in pred.int()[idx,:]]
                 pred_seq = " ".join(pred_arr)
                 pred_seqs.write(pred_seq+'\n')
 
