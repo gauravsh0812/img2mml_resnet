@@ -60,6 +60,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         # print(pred)
         # print(pred.shape)
         for idx in range(batch_size):
+            print(idx)
             trg_arr = [vocab.itos[itrg] for itrg in trg.int()[idx,:]]
             trg_seq = " ".join(trg_arr)
             trg_seqs.write(trg_seq + '\n')
