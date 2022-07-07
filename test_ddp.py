@@ -59,13 +59,13 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
             #trg = [trg len, batch size]
             #output = [trg len, batch size, output dim]
             trg = trg.permute(1,0)
-            print(trg.shape,  output.shape)
+            # print(trg.shape,  output.shape)
             #print(' ')
             output_dim = output.shape[-1]
             output = output[1:].contiguous().view(-1, output_dim)
             trg = trg[1:].contiguous().view(-1)
 
-            print('testing scripts:  ', output.shape,  trg.shape)
+            # print('testing scripts:  ', output.shape,  trg.shape)
             #print(' ')
             #trg = [(trg len - 1) * batch size]
             #output = [(trg len - 1) * batch size, output dim]
