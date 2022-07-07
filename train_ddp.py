@@ -51,13 +51,6 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
 
         # translating and storing trg and pred sequences in batches
         # writing target eqns
-        # print(trg)
-        # print(trg.shape)
-        # print(' ')
-        # print(pred)
-        # print(pred.shape)
-        print('batch_size:  ', batch_size)
-        print(trg.shape)
         for idx in range(batch_size):
             trg_arr = [vocab.itos[itrg] for itrg in trg.int()[idx,:]]
             trg_seq = " ".join(trg_arr)
