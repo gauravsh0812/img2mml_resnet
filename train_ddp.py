@@ -78,7 +78,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         #print('output dtype: ', output.dtype)
         #print('trg:  ', trg.to(torch.int64))
         #print('output: ', output.to(torch.int64))
-        print('training scripts:  ', output.shape,  trg.shape)
+        # print('training scripts:  ', output.shape,  trg.shape)
         loss = criterion(output, trg.to(torch.int64))
         # print('output size: ', output.shape)
         # print('trg:  ', trg.shape)
