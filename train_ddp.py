@@ -46,7 +46,6 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         #output, pred, encoder, decoder = model(src, trg, vocab, True, True, 0.5)
         output, pred = model(src, trg, vocab, True, True, 0.5)
         # output, pred, encoder, decoder = model( tdi, vocab, True, True, 0.5 )
-        pred = pred.permute(1,0) # [B, len ]--> [len, B]
         output = output.permute(1,0,2)
 
         # translating and storing trg and pred sequences in batches
@@ -64,21 +63,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
 
         if write_file:
             for idx in range(batch_size):
-                # torch.set_printoptions(profile="full")
-                # print('train all target eqns: ', trg)
-                # print(' ')
-                # print('train target eqn: ', trg[idx,:])
-
-                trg_arr = [vocab.itos[itrg] for itrg in trg.int()[idx,:]]
-                trg_seq = " ".join(trg_arr)
-                trg_seqs.write(trg_seq + '\n')
-
-                # torch.set_printoptions(profile="full")
-                # print('train all pred eqns: ', pred)
-                # print(' ')
-                # print('train pred eqn: ', pred[:,idx])
-
-                pred_arr = [vocab.itos[ipred] for ipred in pred.int()[:,idx]]
+                pred_arr = [vocab.itos[ipred] for ipred in pred.int()[idx,:]]
                 pred_seq = " ".join(pred_arr)
                 pred_seqs.write(pred_seq+'\n')
 
