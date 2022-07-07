@@ -12,7 +12,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
     epoch_loss = 0
 
     if write_file:
-        trg_seqs = open(f'logs/train_targets_epoch_{epoch}.txt', 'w')
+        trg_seqs = open(f'logs/train_targets.txt', 'w')
         pred_seqs = open(f'logs/train_predicted_epoch_{epoch}.txt', 'w')
 
     for i, (img, mml) in enumerate(train_dataloader):
@@ -48,9 +48,21 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         # output, pred, encoder, decoder = model( tdi, vocab, True, True, 0.5 )
         pred = pred.permute(1,0) # [B, len ]--> [len, B]
         output = output.permute(1,0,2)
+
         # translating and storing trg and pred sequences in batches
+        # writing target eqns
+        batch_size = trg.shape[1]
+        print(trg)
+        print(trg.shape)
+        print(' ')
+        print(pred)
+        print(pred.shape)
+        for idx in range(batch_size):
+            trg_arr = [vocab.itos[itrg] for itrg in trg.int()[idx,:]]
+            trg_seq = " ".join(trg_arr)
+            trg_seqs.write(trg_seq + '\n')
+
         if write_file:
-            batch_size = trg.shape[1]
             for idx in range(batch_size):
                 # torch.set_printoptions(profile="full")
                 # print('train all target eqns: ', trg)
