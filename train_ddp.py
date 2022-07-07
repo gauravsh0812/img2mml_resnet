@@ -24,7 +24,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         # trg.to(device, dtype=torch.int64)
         trg.to(device, dtype=torch.int64)
         # trg = mml.to(device, dtype=torch.int64)
-        batch_size = trg.shape[1]
+        batch_size = trg.shape[0]
         # print('train batch: ', batch_size.shape)
 
         # loading image Tensors
@@ -49,18 +49,16 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         # output, pred, encoder, decoder = model( tdi, vocab, True, True, 0.5 )
         output = output.permute(1,0,2)
 
-
-
         # translating and storing trg and pred sequences in batches
         # writing target eqns
-        batch_size = trg.shape[1]
         # print(trg)
         # print(trg.shape)
         # print(' ')
         # print(pred)
         # print(pred.shape)
+        print('batch_size:  ', batch_size)
+        print(trg.shape)
         for idx in range(batch_size):
-            print(trg.shape)
             trg_arr = [vocab.itos[itrg] for itrg in trg.int()[idx,:]]
             trg_seq = " ".join(trg_arr)
             trg_seqs.write(trg_seq + '\n')
