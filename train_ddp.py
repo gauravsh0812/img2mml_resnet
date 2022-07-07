@@ -3,8 +3,6 @@
 import time, pandas
 import torch
 
-torch.set_printoptions(threshold=10_000)
-
 def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterion, device, clip, write_file):
 
     model.train()  # train mode is ON i.e. dropout and normalization tech. will be used
@@ -54,6 +52,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         if write_file:
             batch_size = trg.shape[1]
             for idx in range(batch_size):
+                torch.set_printoptions(profile="full")
                 print('train all target eqns: ', trg)
                 print(' ')
                 print('train target eqn: ', trg[idx,:])
@@ -62,6 +61,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
                 trg_seq = " ".join(trg_arr)
                 trg_seqs.write(trg_seq + '\n')
 
+                torch.set_printoptions(profile="full")
                 print('train all pred eqns: ', pred)
                 print(' ')
                 print('train pred eqn: ', pred[:,idx])
