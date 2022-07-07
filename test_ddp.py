@@ -59,7 +59,7 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
             #trg = [trg len, batch size]
             #output = [trg len, batch size, output dim]
 
-            #print(trg.shape,  output.shape)
+            print(trg.shape,  output.shape)
             #print(' ')
             output_dim = output.shape[-1]
             output = output[1:].contiguous().view(-1, output_dim)
