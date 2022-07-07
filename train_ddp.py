@@ -71,7 +71,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         #print('trg view shape: ', trg[1:].view(-1).shape)
 
         #output = [B, trg len, output dim] --> [len, B, out]
-        print(trg.shape,  output.shape)
+        # print(trg.shape,  output.shape)
         output_dim = output.shape[-1]
         output = output[1:].contiguous().view(-1, output_dim)
         trg = trg[1:].view(-1)
@@ -79,7 +79,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         #print('output dtype: ', output.dtype)
         #print('trg:  ', trg.to(torch.int64))
         #print('output: ', output.to(torch.int64))
-        print('training scripts:  ', output.shape,  trg.shape)
+        # print('training scripts:  ', output.shape,  trg.shape)
         loss = criterion(output, trg.to(torch.int64))
         # print('output size: ', output.shape)
         # print('trg:  ', trg.shape)
