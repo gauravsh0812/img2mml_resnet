@@ -2,7 +2,6 @@
 
 import time, pandas
 import torch
-import json
 
 def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterion, device, clip, write_file):
 
@@ -103,6 +102,6 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
 
     #return net_loss, encoder, decoder
     if write_file:
-        json.dump(all_preds, open(f'logs/preds_epoch_{epoch}.txt', 'w'), indent=4)
+        torch.save(all_preds, f'logs/preds_epoch_{epoch}.txt')
 
     return net_loss

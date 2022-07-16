@@ -82,6 +82,6 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
             net_loss = epoch_loss / len(test_dataloader)
 
         if write_file:
-            json.dump(all_preds, open(f'logs/preds_epoch_{epoch}.txt', 'w'), indent=4)
+            torch.save(all_preds, f'logs/preds_epoch_{epoch}.txt')
 
         return net_loss#, encoder, decoder
