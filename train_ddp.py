@@ -12,11 +12,11 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
     epoch_loss = 0
 
     # write the target file once as it will be same for every epoch
-    if epoch==0: trg_seqs = open(f'logs/train_targets.txt', 'w')
+    if epoch==0: trg_seqs = open(f'logs/train_targets_100K.txt', 'w')
 
     # opening predicted file
     if write_file:
-        pred_seqs = open(f'logs/train_predicted_epoch_{epoch}.txt', 'w')
+        pred_seqs = open(f'logs/train_predicted_100K_epoch_{epoch}.txt', 'w')
 
     for i, (img, mml) in enumerate(train_dataloader):
     # for i, tdi in enumerate(train_dataloader):

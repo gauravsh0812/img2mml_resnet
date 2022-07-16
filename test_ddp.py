@@ -12,10 +12,10 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
     epoch_loss = 0
 
     if epoch==0:
-        trg_seqs = open('logs/test_targets.txt', 'w')
+        trg_seqs = open('logs/test_targets_100K.txt', 'w')
 
     if write_file:
-        pred_seqs = open(f'logs/test_predicted_epoch_{epoch}.txt', 'w')
+        pred_seqs = open(f'logs/test_predicted_100K_epoch_{epoch}.txt', 'w')
 
     with torch.no_grad():
 
