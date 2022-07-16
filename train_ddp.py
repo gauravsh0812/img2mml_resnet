@@ -105,9 +105,9 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
 
     #return net_loss, encoder, decoder
     if epoch ==0:
-        torch.save(all_preds, f'logs/trgs_100K_tensors.txt')
+        torch.save(all_trgs, f'logs/tensors/train_trgs_100K.txt')
 
     if write_file:
-        torch.save(all_preds, f'logs/preds_100K_tensors_train_epoch_{epoch}.txt')
+        torch.save(all_preds, f'logs/tensors/train_preds_100K_epoch_{epoch}.txt')
 
     return net_loss
