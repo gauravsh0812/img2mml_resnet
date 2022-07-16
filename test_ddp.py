@@ -92,12 +92,14 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
 
         if epoch ==0:
             torch.save(all_val_trgs, f'logs/tensors/val_trgs_100K.txt')
-            type='val'
+
         if epoch =='test_0':
             torch.save(all_test_trgs, f'logs/tensors/test_trgs_100K.txt')
-            type='test'
 
         if write_file:
-            torch.save(all_preds, f'logs/tensors/{type}_preds_100K_epoch_{epoch}.txt')
+            if epoch != 'test_0':
+                torch.save(all_preds, f'logs/tensors/val_preds_100K_epoch_{epoch}.txt')
+            else:
+                torch.save(all_preds, f'logs/tensors/test_preds_100K_epoch_{epoch}.txt')
 
         return net_loss#, encoder, decoder
