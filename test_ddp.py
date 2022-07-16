@@ -11,8 +11,12 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
 
     epoch_loss = 0
 
+    if epoch == 'test_0':
+        all_test_trgs = []
+
     if epoch==0:
-        trg_seqs = open('logs/test_targets_100K.txt', 'w')
+        all_val_trgs = []
+        trg_seqs = open('logs/val_targets_100K.txt', 'w')
 
     if write_file:
         pred_seqs = open(f'logs/test_predicted_100K_epoch_{epoch}.txt', 'w')
@@ -45,7 +49,11 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
             output = output.permute(1,0,2)
 
             # translating and storing trg and pred sequences in batches
-            if epoch==0:
+
+            if epoch==0 or epoch=='test_0':
+
+                if epoch==0:all_val_trgs.append(trg)
+                if epoch=='test_0':all_test_trgs.append(trg)
                 for idx in range(batch_size):
                     #print(trg[:,idx])
                     trg_arr = [vocab.itos[int(itrg)] for itrg in trg.int()[idx,:]]
@@ -81,7 +89,12 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
             epoch_loss += loss.item()
             net_loss = epoch_loss / len(test_dataloader)
 
+        if epoch ==0:
+            torch.save(all_val_trgs, f'logs/val_trgs__100K_tensors.txt')
+        if epoch =='test_0':
+            torch.save(all_test_trgs, f'logs/test_trgs_100K_tensors.txt')
+
         if write_file:
-            torch.save(all_preds, f'logs/preds_test_epoch_{epoch}.txt')
+            torch.save(all_preds, f'logs/preds_100K_tensors_test_epoch_{epoch}.txt')
 
         return net_loss#, encoder, decoder

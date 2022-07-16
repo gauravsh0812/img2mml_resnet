@@ -12,7 +12,9 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
     epoch_loss = 0
 
     # write the target file once as it will be same for every epoch
-    if epoch==0: trg_seqs = open(f'logs/train_targets_100K.txt', 'w')
+    if epoch==0:
+        all_trgs = []
+        trg_seqs = open(f'logs/train_targets_100K.txt', 'w')
 
     # opening predicted file
     if write_file:
@@ -56,6 +58,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         # translating and storing trg and pred sequences in batches
         # writing target eqns
         if epoch==0:
+            all_trgs.append(trg)
             for idx in range(batch_size):
                 trg_arr = [vocab.itos[itrg] for itrg in trg.int()[idx,:]]
                 trg_seq = " ".join(trg_arr)
@@ -101,7 +104,10 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         net_loss = epoch_loss/len(train_dataloader)
 
     #return net_loss, encoder, decoder
+    if epoch ==0:
+        torch.save(all_preds, f'logs/trgs_100K_tensors.txt')
+
     if write_file:
-        torch.save(all_preds, f'logs/preds_epoch_{epoch}.txt')
+        torch.save(all_preds, f'logs/preds_100K_tensors_train_epoch_{epoch}.txt')
 
     return net_loss
