@@ -16,6 +16,7 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
 
     if write_file:
         pred_seqs = open(f'logs/test_predicted_100K_epoch_{epoch}.txt', 'w')
+        all_preds = []
 
     with torch.no_grad():
 
@@ -53,6 +54,7 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
                     trg_seqs.write(trg_seq + '\n')
 
             if write_file:
+                all_preds.append(pred)
                 #print('WRITING SEQ...')
                 for idx in range(batch_size):
                     #print(trg.shape,  pred.shape)
@@ -78,5 +80,8 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
 
             epoch_loss += loss.item()
             net_loss = epoch_loss / len(test_dataloader)
+
+        if write_file:
+            json.dump(all_preds, open(f'logs/preds_epoch_{epoch}.txt', 'w'), indent=4)
 
         return net_loss#, encoder, decoder

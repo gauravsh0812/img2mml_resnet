@@ -2,6 +2,7 @@
 
 import time, pandas
 import torch
+import json
 
 def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterion, device, clip, write_file):
 
@@ -16,6 +17,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
 
     # opening predicted file
     if write_file:
+        all_preds = []
         pred_seqs = open(f'logs/train_predicted_100K_epoch_{epoch}.txt', 'w')
 
     for i, (img, mml) in enumerate(train_dataloader):
@@ -61,6 +63,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
                 trg_seqs.write(trg_seq + '\n')
 
         if write_file:
+            all_preds.append(pred)
             for idx in range(batch_size):
                 pred_arr = [vocab.itos[ipred] for ipred in pred.int()[idx,:]]
                 pred_seq = " ".join(pred_arr)
@@ -99,4 +102,7 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         net_loss = epoch_loss/len(train_dataloader)
 
     #return net_loss, encoder, decoder
+    if write_file:
+        json.dump(all_preds, open(f'logs/preds_epoch_{epoch}.txt', 'w'), indent=4)
+
     return net_loss
