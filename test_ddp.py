@@ -13,6 +13,7 @@ def evaluate(model, epoch, vocab, batch_size, test_dataloader, criterion, device
 
     if epoch == 'test_0':
         all_test_trgs = []
+        trg_seqs = open('logs/test_targets_100K.txt', 'w')
 
     if epoch==0:
         all_val_trgs = []
