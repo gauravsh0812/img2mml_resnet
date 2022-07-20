@@ -1,5 +1,7 @@
 # img2mml_resnet
 
+This repository consists of the scripts to run `image2mml` model. 
+
 ```
 python3 preprocessing/preprocess_mml.py
 ```
