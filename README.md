@@ -1,6 +1,6 @@
 # img2mml_resnet
 
-This repository consists of the scripts to run `image2mml` model. 
+This repository consists of scripts to run `image2mml` model. 
 
 ## Requirements 
 python >=3.7
@@ -15,6 +15,8 @@ cudatoolkit >= 11.1
 
 torchtext
 
+## Preprocessing
+Before moving forward, first download the dataset from '<data_source>'. Save the images under folder 'data/images' and MathML as 'data/original_mml.txt' under 'data' folder.
 
 ```
 python3 preprocessing/preprocess_mml.py
