@@ -32,5 +32,5 @@ python3 preprocessing/preprocess_images.py
 ## To run the model:
 
 ```
-python3 main_ddp.py --gpu_num 1
+python3 main_ddp.py --local_rank 0 --batch_size 128 --epochs 100
 ```
