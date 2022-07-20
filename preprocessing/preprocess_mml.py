@@ -13,6 +13,9 @@ def cleaning_mml(eqn):
                 'symmetric', 'fence', 'rspace', 'lspace', 'displaystyle', 'scriptlevel',
                 'stretchy','form', 'movablelimits', 'maxsize', 'minsize', 'linethickness', 'mstyle']
 
+    # An additional '&#xA0;' token has been removed during the selection of eqns, due to it repetative behaviour
+    # which causes unneccesary complexity. Removing it doesn't affect the structure of the equation.
+
     keep = ['mo', 'mi', 'mfrac', 'mn', 'mfrac','mrow']
 
     for e in eliminate:

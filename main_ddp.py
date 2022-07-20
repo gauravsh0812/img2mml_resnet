@@ -71,7 +71,7 @@ def define_model(vocab, DEVICE):#, TRG_PAD_IDX, OUTPUT_DIM):
 
     ENC = OpenNMTEncoder(INPUT_CHANNEL, HID_DIM, N_LAYERS, DROPOUT, DEVICE)
     DEC = OpenNMTDecoder(DEC_EMB_DIM, ENC_DIM,  HID_DIM, ATTN_DIM, OUTPUT_DIM, N_LAYERS, DROPOUT)
-    model = OpenNMTImg2Seq(ENC, DEC, DEVICE, ENC_DIM, HID_DIM)
+    model = OpenNMTImg2Seq(ENC, DEC, DEVICE)
 
 
     return model

@@ -26,13 +26,10 @@ class OpenNMTEncoder(nn.Module):
         self.maxpool = nn.MaxPool2d(kernel_size=(2,2), stride=(2,2))
         self.maxpool1 = nn.MaxPool2d(kernel_size=(1, 2), stride=(1, 2))
         self.emb = nn.Embedding(256, 512)
-        # self.final_enc_layer = nn.Linear(1000, 512)
         self.lstm = nn.LSTM(512, hid_dim, num_layers=1, dropout=0.3, bidirectional=False, batch_first=False)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, src):
-        # img = [batch, Cin, W, H]
-        # print('src:  ', src.shape)
         batch = src.shape[0]
         C_in = src.shape[1]
 
@@ -51,7 +48,6 @@ class OpenNMTEncoder(nn.Module):
         src = F.relu(self.batch_norm3(self.conv_layer5(src)))
         # layer 6
         enc_output = F.relu(self.conv_layer6(src))    # [B, 512, w, h]
-        # print('enc_output: ', enc_output.shape)
 
         # flatten the last two dimensions of enc_output i.e.
         # [batch, 512, W'xH']
@@ -133,14 +129,12 @@ class OpenNMTAttention(nn.Module):
         #encoder_outputs = [src len, batch size, enc dim ]    where src_len = H*W+1
 
         batch_size = encoder_outputs.shape[1]
-        # print('batch: ', batch_size)
         src_len = encoder_outputs.shape[0]
         hidden = hidden.repeat(src_len, 1, 1).permute(1, 0, 2)
         encoder_outputs = encoder_outputs.permute(1, 0, 2)      # Hid: [batch size, src len, dec hid dim]   out: [batch size, src len, enc dim ]
         energy = torch.tanh(self.attn(torch.cat((hidden, encoder_outputs), dim = 2)))   #[batch size, src len, dec hid dim]
         attention = self.v(energy).squeeze(2)       # [batch size, src len]
         a = F.softmax(attention, dim=1).unsqueeze(0)        #[1, batch size, src len]
-        # print('a: ', a.shape)
         weighted = torch.bmm(a.permute(1, 0, 2), encoder_outputs)   # [B, 1, e]
 
         return weighted.permute(1, 0, 2)
@@ -196,7 +190,6 @@ class OpenNMTDecoder(nn.Module):
         for p in self.embedding.parameters():
             p.requires_grad = fine_tune
 
-
     def forward(self, dec_src, encoder_out, hidden, cell):
         # Embedding
         embeddings = self.embedding(dec_src.int().unsqueeze(0))  # (1, batch_size, embed_dim)
@@ -204,17 +197,11 @@ class OpenNMTDecoder(nn.Module):
         # Calculate attention
         final_attn_encoding = self.attention(encoder_out, hidden)    # [ 1, B, enc-dim]
 
-#        print('attention done...')
-
         # lstm input
         lstm_input = torch.cat((embeddings, final_attn_encoding), dim=2)    # [1, B, enc+embed]
         lstm_input = self.lstm_input_layer(lstm_input)                      # [1, B, embed]
-#        print('ready for lstm...')
-        # print(lstm_input.shape,  hidden.shape)
         lstm_output, (hidden, cell) = self.decode_step(lstm_input, (hidden, cell))    # H: [1, B, hid]     O: [1, B, Hid*2]
- #       print('lstm done...')
         predictions = self.fc(lstm_output)  # [1, Batch, output_dim]
-        # print(predictions.shape)
 
         return predictions.squeeze(0), hidden, cell
 
@@ -223,21 +210,16 @@ class OpenNMTImg2Seq(nn.Module):
     """
     Calling class
     """
-    def __init__(self, encoder, decoder, device, encoder_dim, hid_dim):
+    def __init__(self, encoder, decoder, device):
         super(OpenNMTImg2Seq, self).__init__()
 
         self.encoder = encoder
         self.decoder = decoder
         self.device = device
+        self.pad_index = 0
 
     def forward(self, src, trg,  vocab, write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
-    # def forward(self, tdi, vocab, write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
 
-        # (img, mml) = tdi
-        # trg = mml.to(self.device, dtype=torch.int64)
-        # print('im2mml trg shape:  ',  trg.shape)
-        # src = img.to(self.device)
-        # print('im2mml src, trg shape:  ', src.shape, trg.shape)
         trg = trg.permute(1,0)    # [len, B]
         batch_size = trg.shape[1]
         trg_len = trg.shape[0]
@@ -245,13 +227,9 @@ class OpenNMTImg2Seq(nn.Module):
 
         # to store all separate outputs of individual token
         outputs = torch.zeros(trg_len, batch_size, trg_dim).to(self.device) #[trg_len, batch, output_dim]
-  #      print('outputs shape initially: ', outputs.shape)
-        # for each token, [batch, output_dim]
 
         # run the encoder --> get flattened FV of images
         encoder_out, hidden, cell = self.encoder(src)       # enc_output: [HxW+1, B, H*2]   Hid/cell: [1, B, Hid]
- #       print('encoder done...')
-        # print('encopder done...t('encoder_out: ', encoder_out.shape)
 
         dec_src = trg[0,:]   # [1, B]
 
@@ -261,9 +239,6 @@ class OpenNMTImg2Seq(nn.Module):
             pred_seq_per_batch[0,:] = torch.full(dec_src.shape, init_idx)
 
         for t in range(1, trg_len):
-
-            # print(trg_len, t)
-
             output, hidden, cell = self.decoder(dec_src, encoder_out, hidden, cell)     # O: [B, out]   H: [1, B, Hid]
             outputs[t]=output
             top1 = output.argmax(1)     # [batch_size]
@@ -276,9 +251,7 @@ class OpenNMTImg2Seq(nn.Module):
                 teacher_force = random.random() < teacher_forcing_ratio
 
             dec_src = trg[t] if teacher_force else top1
-#        print('this batch done.....')    
 
-        if  write_flag: 
+        if  write_flag:
             return outputs.permute(1,0,2), pred_seq_per_batch.permute(1,0) #,  self.encoder, self.decoder
-            #print('returning...')
         else: return outputs, self.encoder, self.decoder
