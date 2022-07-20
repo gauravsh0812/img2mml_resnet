@@ -23,11 +23,13 @@ This script will remove the unnecessary tokens from the MathML equation, require
 ```
 python3 preprocessing/preprocess_mml.py
 ```
-
-
+Image preprocessing:
+Instead of using images as im=nput, we will first convert them to tensors to make the training faster.
 ```
 python3 preprocessing/preprocess_images.py
 ```
+
+## To run the model:
 
 ```
 python3 main_ddp.py --gpu_num 1
