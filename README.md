@@ -1,6 +1,6 @@
 # img2mml_resnet
 
-This repository consists of scripts to run `image2mml` model. 
+This repository consists of scripts to run `Image2MML` model. 
 
 ## Requirements 
 python >=3.7
