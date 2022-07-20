@@ -18,9 +18,12 @@ torchtext
 ## Preprocessing
 Before moving forward, first download the dataset from `<data_source>`. Save the images under folder `data/images` and MathML as `data/original_mml.txt` under `data` folder.
 
+MathML preprocessing:
+This script will remove the unnecessary tokens from the MathML equation, required only to represent it beautifully.
 ```
 python3 preprocessing/preprocess_mml.py
 ```
+
 
 ```
 python3 preprocessing/preprocess_images.py
