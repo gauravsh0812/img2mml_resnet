@@ -29,7 +29,9 @@ Instead of using images as im=nput, we will first convert them to tensors to mak
 python3 preprocessing/preprocess_images.py
 ```
 
-## To run the model:
+## To run the model: 
+
+We will be using `PyTorch data_parallelism` to make training faster by exploiting multiple GPUs. 
 
 ```
 python3 main_ddp.py --local_rank 0 --batch_size 128 --epochs 100
