@@ -16,7 +16,7 @@ cudatoolkit >= 11.1
 torchtext
 
 ## Preprocessing
-Before moving forward, first download the dataset from '<data_source>'. Save the images under folder 'data/images' and MathML as 'data/original_mml.txt' under 'data' folder.
+Before moving forward, first download the dataset from `<data_source>`. Save the images under folder `data/images` and MathML as `data/original_mml.txt` under `data` folder.
 
 ```
 python3 preprocessing/preprocess_mml.py
