@@ -21,13 +21,12 @@ def train(model, epoch, vocab, batch_size, train_dataloader, optimizer, criterio
         all_preds = []
         pred_seqs = open(f'logs/train_predicted_100K_epoch_{epoch}.txt', 'w')
 
-    # for i, (img, mml) in enumerate(train_dataloader):
     for i, (img, mml) in enumerate(train_dataloader):
         #print(f'============== {i} ================')
         # trg = trg.permute(1,0)    # trg: [len, B] --> [B, len]
         trg = mml
         trg = trg.permute(1,0)    # trg: [len, B] --> [B, len]
-        
+
         # trg.to(device, dtype=torch.int64)
         trg.to(device, dtype=torch.int64)
         # trg = mml.to(device, dtype=torch.int64)

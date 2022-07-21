@@ -5,7 +5,7 @@ import torchtext
 import random
 import torchvision
 
-class OpenNMTEncoder(nn.Module):
+class NRE_Encoder(nn.Module):
 
     def __init__(self, input_channel, hid_dim, n_layers, dropout, device):
         super(OpenNMTEncoder, self).__init__()
@@ -57,7 +57,7 @@ class OpenNMTEncoder(nn.Module):
 
         return final_encoder_output, hidden, cell       # O:[H*W+1, B, Hid]     H:[1, B, hid]
 
-class OpenNMTAttention(nn.Module):
+class NRE_Attention(nn.Module):
     def __init__(self, enc_hid_dim, dec_hid_dim):
         super().__init__()
 
@@ -81,7 +81,7 @@ class OpenNMTAttention(nn.Module):
         return weighted.permute(1, 0, 2)
 
 
-class OpenNMTDecoder(nn.Module):
+class NRE_Decoder(nn.Module):
     """
     Decoder.
     """
@@ -106,7 +106,7 @@ class OpenNMTDecoder(nn.Module):
         self.dropout = dropout
 
         # self.attention = OpenNMTAttention(encoder_dim, hid_dim, attention_dim)  # attention network
-        self.attention = OpenNMTAttention(encoder_dim, hid_dim)  # attention network
+        self.attention = NRE_Attention(encoder_dim, hid_dim)  # attention network
 
         self.embedding = nn.Embedding(output_dim, embed_dim)  # embedding layer
         self.dropout = nn.Dropout(p=self.dropout)
@@ -147,7 +147,7 @@ class OpenNMTDecoder(nn.Module):
         return predictions.squeeze(0), hidden, cell
 
 
-class OpenNMTImg2Seq(nn.Module):
+class NRE_Img2Seq(nn.Module):
     """
     Calling class
     """

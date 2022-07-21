@@ -17,8 +17,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from train_ddp import train
 from test_ddp import evaluate
 from preprocessing.preprocess_dataloader import preprocess
-# from model.model import Encoder, Decoder, Img2Seq
-from model.cnn_encoder import OpenNMTEncoder, OpenNMTDecoder, OpenNMTImg2Seq
+from model.opennmt import OpenNMTEncoder, OpenNMTDecoder, OpenNMTImg2Seq
+from model.opennmt_no_row_encoding import NRE_Encoder, NRE_Decoder, NRE_Img2Seq
 
 # import torcheck  # can be used to check if the model is working fine or not. Also,
 # can be used to check if any of the parameter or weight is dying or exploding.
@@ -34,7 +34,12 @@ parser.add_argument( '--batch_size', type=int, metavar='', required=True,
                             help='Batch size')
 parser.add_argument( '--epochs', type=int, metavar='', required=True,
                             help='number of epochs')
+parser.add_argument( '--model_type', type=str, metavar='', required=True,
+                            help='type of model. Choose from: opennmt, opennmt_nre')
+
 args = parser.parse_args()
+model_type = args.model_type
+
 ddp = False
 os.environ["CUDA_VISIBLE_DEVICES"] = "0, 1"
 # export CUDA_VISIBLE_DEVICES=0,1
@@ -48,7 +53,7 @@ def set_random_seed(seed):
     torch.manual_seed(SEED)
     torch.cuda.manual_seed(SEED)
 
-def define_model(vocab, DEVICE):#, TRG_PAD_IDX, OUTPUT_DIM):
+def define_model(vocab, DEVICE, MODEL_TYPE):#, TRG_PAD_IDX, OUTPUT_DIM):
     '''
     defining the model
     initializing encoder, decoder, and model
@@ -65,13 +70,15 @@ def define_model(vocab, DEVICE):#, TRG_PAD_IDX, OUTPUT_DIM):
     DROPOUT = 0.3
 
     print('building model...')
-    # ENC = Encoder()
-    # DEC = Decoder(DEC_EMB_DIM, ENC_DIM,  HID_DIM, ATTN_DIM, OUTPUT_DIM, N_LAYERS, DROPOUT)
-    # model = Img2Seq(ENC, DEC, DEVICE, ENC_DIM, HID_DIM)
 
-    ENC = OpenNMTEncoder(INPUT_CHANNEL, HID_DIM, N_LAYERS, DROPOUT, DEVICE)
-    DEC = OpenNMTDecoder(DEC_EMB_DIM, ENC_DIM,  HID_DIM, ATTN_DIM, OUTPUT_DIM, N_LAYERS, DROPOUT)
-    model = OpenNMTImg2Seq(ENC, DEC, DEVICE)
+    if MODEL_TYPE == 'opennmt':
+        ENC = OpenNMTEncoder(INPUT_CHANNEL, HID_DIM, N_LAYERS, DROPOUT, DEVICE)
+        DEC = OpenNMTDecoder(DEC_EMB_DIM, ENC_DIM,  HID_DIM, ATTN_DIM, OUTPUT_DIM, N_LAYERS, DROPOUT)
+        model = OpenNMTImg2Seq(ENC, DEC, DEVICE)
+    elif MODEL_TYPE == 'opennmt_nre':
+        ENC = NRE_Encoder(INPUT_CHANNEL, HID_DIM, N_LAYERS, DROPOUT, DEVICE)
+        DEC = NRE_Decoder(DEC_EMB_DIM, ENC_DIM,  HID_DIM, ATTN_DIM, OUTPUT_DIM, N_LAYERS, DROPOUT)
+        model = NRE_Img2Seq(ENC, DEC, DEVICE)
 
 
     return model
@@ -165,7 +172,8 @@ else:
     train_dataloader, test_dataloader, val_dataloader, vocab = preprocess(device, batch_size, [])
 
 TRG_PAD_IDX = 0     # can be obtained from vocab in preprocessing <pad>:0, <unk>:1, <sos>:2, <eos>:3
-model = define_model(vocab, device)
+
+model = define_model(vocab, device, model_type)
 model = nn.DataParallel(model.cuda(), device_ids=[0, 1])
 # model.to(device)
 
