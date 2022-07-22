@@ -179,7 +179,7 @@ class NRE_Img2Seq(nn.Module):
         encoder_out = self.encoder(src)       # enc_output: [B, 512, enc_dim]
 
         # initialize hidden and cell state to zeros of shape [batch, hid_dim]
-        hidden = cell = self.initialize_hidden(batch_size, self.hid_dim)
+        hidden = cell = self.initialize_hidden(batch_size, self.hid_dim).to(self.device)
 
         dec_src = trg[0,:]   # [1, B]
 
