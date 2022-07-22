@@ -8,7 +8,7 @@ import torchvision
 class NRE_Encoder(nn.Module):
 
     def __init__(self, input_channel, hid_dim, n_layers, dropout, device):
-        super(OpenNMTEncoder, self).__init__()
+        super(NRE_Encoder, self).__init__()
 
         self.n_layers = n_layers
         self.device = device
@@ -59,7 +59,7 @@ class NRE_Encoder(nn.Module):
 
 class NRE_Attention(nn.Module):
     def __init__(self, enc_hid_dim, dec_hid_dim):
-        super().__init__()
+        super(NRE_Attention, self).__init__()
 
         self.attn = nn.Linear(enc_hid_dim + dec_hid_dim, dec_hid_dim)
         self.v = nn.Linear(dec_hid_dim, 1, bias = False)
@@ -95,7 +95,7 @@ class NRE_Decoder(nn.Module):
         :param encoder_dim: feature size of encoded images
         :param dropout: dropout
         """
-        super(OpenNMTDecoder, self).__init__()
+        super(NRE_Decoder, self).__init__()
 
         self.encoder_dim = encoder_dim
         self.attention_dim = attention_dim
@@ -152,7 +152,7 @@ class NRE_Img2Seq(nn.Module):
     Calling class
     """
     def __init__(self, encoder, decoder, device):
-        super(OpenNMTImg2Seq, self).__init__()
+        super(NRE_Img2Seq, self).__init__()
 
         self.encoder = encoder
         self.decoder = decoder
