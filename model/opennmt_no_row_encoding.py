@@ -108,16 +108,6 @@ class NRE_Decoder(nn.Module):
         self.lstm_input_layer = nn.Linear(embed_dim + encoder_dim, embed_dim)
         self.decode_step = nn.LSTM(embed_dim, hid_dim, num_layers=n_layers, dropout=dropout, bias=True)  # decoding LSTMCell
         self.fc = nn.Linear(hid_dim, output_dim)  # linear layer to find scores over vocabulary
-        self.init_weights()  # initialize some layers with the uniform distribution
-
-
-    def init_weights(self):
-        """
-        Initializes some parameters with values from the uniform distribution, for easier convergence.
-        """
-        self.embedding.weight.data.uniform_(-0.1, 0.1)
-        self.fc.bias.data.fill_(0)
-        self.fc.weight.data.uniform_(-0.1, 0.1)
 
     def fine_tune_embeddings(self, fine_tune=True):
         """
