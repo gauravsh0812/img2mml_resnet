@@ -76,9 +76,9 @@ def define_model(vocab, DEVICE, MODEL_TYPE):#, TRG_PAD_IDX, OUTPUT_DIM):
         DEC = OpenNMTDecoder(DEC_EMB_DIM, ENC_DIM,  HID_DIM, ATTN_DIM, OUTPUT_DIM, N_LAYERS, DROPOUT)
         model = OpenNMTImg2Seq(ENC, DEC, DEVICE)
     elif MODEL_TYPE == 'opennmt_nre':
-        ENC = NRE_Encoder(INPUT_CHANNEL, HID_DIM, N_LAYERS, DROPOUT, DEVICE)
+        ENC = NRE_Encoder(INPUT_CHANNEL, HID_DIM, ENC_DIM, N_LAYERS, DROPOUT, DEVICE)
         DEC = NRE_Decoder(DEC_EMB_DIM, ENC_DIM,  HID_DIM, ATTN_DIM, OUTPUT_DIM, N_LAYERS, DROPOUT)
-        model = NRE_Img2Seq(ENC, DEC, DEVICE)
+        model = NRE_Img2Seq(ENC, DEC, DEVICE, HID_DIM)
 
 
     return model

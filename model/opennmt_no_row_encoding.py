@@ -7,7 +7,7 @@ import torchvision
 
 class NRE_Encoder(nn.Module):
 
-    def __init__(self, input_channel, hid_dim, n_layers, dropout, device):
+    def __init__(self, input_channel, hid_dim, enc_dim, n_layers, dropout, device):
         super(NRE_Encoder, self).__init__()
 
         self.n_layers = n_layers
@@ -25,8 +25,7 @@ class NRE_Encoder(nn.Module):
         self.batch_norm3 = nn.BatchNorm2d(512)
         self.maxpool = nn.MaxPool2d(kernel_size=(2,2), stride=(2,2))
         self.maxpool1 = nn.MaxPool2d(kernel_size=(1, 2), stride=(1, 2))
-        self.emb = nn.Embedding(256, 512)
-        self.lstm = nn.LSTM(512, hid_dim, num_layers=1, dropout=0.3, bidirectional=False, batch_first=False)
+        self.final_linear = nn.Linear(10*33, enc_dim)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, src):
@@ -49,13 +48,11 @@ class NRE_Encoder(nn.Module):
         # layer 6
         enc_output = F.relu(self.conv_layer6(src))    # [B, 512, w, h]
 
-        # flatten the last two dimensions of enc_output i.e.
-        # [batch, 512, W'xH']
-        print('enc_output shape: ', enc_output.shape)
+        # flatten the all dimensions except Batch of enc_output i.e.
+        # [batch, 512 x W'x H']
+        enc_output = self.final_layer(torch.flatten(enc_output, start_dim = 2, end_dim = -1))  #[b,512, wxh] --> [b, 512, enc_dim=512]
 
-        abcde
-
-        return final_encoder_output, hidden, cell       # O:[H*W+1, B, Hid]     H:[1, B, hid]
+        return enc_output
 
 class NRE_Attention(nn.Module):
     def __init__(self, enc_hid_dim, dec_hid_dim):
@@ -70,7 +67,7 @@ class NRE_Attention(nn.Module):
         #encoder_outputs = [src len, batch size, enc dim ]    where src_len = H*W+1
 
         batch_size = encoder_outputs.shape[1]
-        src_len = encoder_outputs.shape[0]
+        src_len = encoder_outputs.shape[-1]
         hidden = hidden.repeat(src_len, 1, 1).permute(1, 0, 2)
         encoder_outputs = encoder_outputs.permute(1, 0, 2)      # Hid: [batch size, src len, dec hid dim]   out: [batch size, src len, enc dim ]
         energy = torch.tanh(self.attn(torch.cat((hidden, encoder_outputs), dim = 2)))   #[batch size, src len, dec hid dim]
@@ -105,7 +102,6 @@ class NRE_Decoder(nn.Module):
         self.output_dim = output_dim
         self.dropout = dropout
 
-        # self.attention = OpenNMTAttention(encoder_dim, hid_dim, attention_dim)  # attention network
         self.attention = NRE_Attention(encoder_dim, hid_dim)  # attention network
 
         self.embedding = nn.Embedding(output_dim, embed_dim)  # embedding layer
@@ -114,6 +110,7 @@ class NRE_Decoder(nn.Module):
         self.decode_step = nn.LSTM(embed_dim, hid_dim, num_layers=n_layers, dropout=dropout, bias=True)  # decoding LSTMCell
         self.fc = nn.Linear(hid_dim, output_dim)  # linear layer to find scores over vocabulary
         self.init_weights()  # initialize some layers with the uniform distribution
+
 
     def init_weights(self):
         """
@@ -151,13 +148,22 @@ class NRE_Img2Seq(nn.Module):
     """
     Calling class
     """
-    def __init__(self, encoder, decoder, device):
+    def __init__(self, encoder, decoder, device, hid_dim):
         super(NRE_Img2Seq, self).__init__()
 
         self.encoder = encoder
         self.decoder = decoder
         self.device = device
+        self.hid_dim = hid_dim
         self.pad_index = 0
+
+    def initialize_hidden(self, batch_size, hid_dim):
+        """
+        initailzing the hidden layer for each and every batch
+        as every image is independent and satisfies i.i.d condition
+        """
+        return torch.zeros(batch_size, hid_dim)
+
 
     def forward(self, src, trg, vocab, write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
 
@@ -170,7 +176,10 @@ class NRE_Img2Seq(nn.Module):
         outputs = torch.zeros(trg_len, batch_size, trg_dim).to(self.device) #[trg_len, batch, output_dim]
 
         # run the encoder --> get flattened FV of images
-        encoder_out, hidden, cell = self.encoder(src)       # enc_output: [HxW+1, B, H*2]   Hid/cell: [1, B, Hid]
+        encoder_out = self.encoder(src)       # enc_output: [B, 512, enc_dim]
+
+        # initialize hidden and cell state to zeros of shape [batch, hid_dim]
+        hidden = cell = self.initialize_hidden(batch_size, self.hid_dim)
 
         dec_src = trg[0,:]   # [1, B]
 
