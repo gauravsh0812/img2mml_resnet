@@ -70,6 +70,7 @@ class NRE_Attention(nn.Module):
         src_len = encoder_outputs.shape[-1]
         hidden = hidden.repeat(src_len, 1, 1).permute(1, 0, 2)
         encoder_outputs = encoder_outputs.permute(1, 0, 2)      # Hid: [batch size, src len, dec hid dim]   out: [batch size, src len, enc dim ]
+        print('attn shapes:', hidden.shape, encoder_outputs.shape)
         energy = torch.tanh(self.attn(torch.cat((hidden, encoder_outputs), dim = 2)))   #[batch size, src len, dec hid dim]
         attention = self.v(energy).squeeze(2)       # [batch size, src len]
         a = F.softmax(attention, dim=1).unsqueeze(0)        #[1, batch size, src len]
