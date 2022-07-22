@@ -67,7 +67,7 @@ class My_pad_collate(object):
         padded_mml_tensor = pad_sequence(_mml, padding_value=0)
         _img = [i for i in _img]
 
-        return seq_length_tensor, torch.stack(_img).to(self.device), padded_mml_tensor.to(self.device)
+        return torch.stack(_img).to(self.device), padded_mml_tensor.to(self.device)
 
 
 def preprocess(device, batch_size, args_arr):
