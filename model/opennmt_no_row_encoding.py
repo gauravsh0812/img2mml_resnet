@@ -64,12 +64,11 @@ class NRE_Attention(nn.Module):
     def forward(self, encoder_outputs, hidden):
 
         #hidden = [1, batch size, dec hid dim]
-        #encoder_outputs = [src len, batch size, enc dim ]    where src_len = H*W+1
+        #encoder_outputs = [batch size, src_len, enc dim ]    where src_len = H*W+1
 
         batch_size = encoder_outputs.shape[1]
-        src_len = encoder_outputs.shape[-1]
-        hidden = hidden.repeat(src_len, 1, 1).permute(1, 0, 2)
-        encoder_outputs = encoder_outputs.permute(1, 0, 2)      # Hid: [batch size, src len, dec hid dim]   out: [batch size, src len, enc dim ]
+        src_len = encoder_outputs.shape[1]
+        hidden = hidden.repeat(src_len, 1, 1).permute(1, 0, 2)  # Hid: [batch size, src len, dec hid dim]   out: [batch size, src len, enc dim ]
         print('attn shapes:', hidden.shape, encoder_outputs.shape)
         energy = torch.tanh(self.attn(torch.cat((hidden, encoder_outputs), dim = 2)))   #[batch size, src len, dec hid dim]
         attention = self.v(energy).squeeze(2)       # [batch size, src len]
@@ -163,7 +162,7 @@ class NRE_Img2Seq(nn.Module):
         initailzing the hidden layer for each and every batch
         as every image is independent and satisfies i.i.d condition
         """
-        return torch.zeros(batch_size, hid_dim)
+        return torch.zeros(batch_size, hid_dim).unsqeeze(0)  # [1, batch, hid_dim]
 
 
     def forward(self, src, trg, vocab, write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
