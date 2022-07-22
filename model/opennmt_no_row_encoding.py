@@ -162,7 +162,7 @@ class NRE_Img2Seq(nn.Module):
         initailzing the hidden layer for each and every batch
         as every image is independent and satisfies i.i.d condition
         """
-        return torch.zeros(batch_size, hid_dim).unsqeeze(0)  # [1, batch, hid_dim]
+        return torch.zeros(batch_size, hid_dim).unsqueeze(0)  # [1, batch, hid_dim]
 
 
     def forward(self, src, trg, vocab, write_flag=False, teacher_force_flag=False, teacher_forcing_ratio=0):
