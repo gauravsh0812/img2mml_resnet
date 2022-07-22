@@ -50,7 +50,7 @@ class NRE_Encoder(nn.Module):
 
         # flatten the all dimensions except Batch of enc_output i.e.
         # [batch, 512 x W'x H']
-        enc_output = self.final_layer(torch.flatten(enc_output, start_dim = 2, end_dim = -1))  #[b,512, wxh] --> [b, 512, enc_dim=512]
+        enc_output = self.final_linear(torch.flatten(enc_output, start_dim = 2, end_dim = -1))  #[b,512, wxh] --> [b, 512, enc_dim=512]
 
         return enc_output
 
